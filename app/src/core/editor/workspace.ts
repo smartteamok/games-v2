@@ -67,98 +67,6 @@ export const createWorkspace = (
 ): unknown => {
   const BASE_URL = import.meta.env.BASE_URL;
   
-  // Interceptar setValue de FieldNumber para hacer save/load automático
-  // Estrategia: cuando cambia un número, hacer save/load del workspace para forzar re-render completo
-  // Usamos debounce para evitar hacerlo demasiado frecuentemente
-  // Map para rastrear timeouts por workspace (permite múltiples workspaces)
-  const workspaceRefreshTimeouts = new Map<any, number>();
-  const REFRESH_DELAY = 150; // ms de delay antes de hacer refresh
-  
-  const refreshWorkspace = (ws: WorkspaceLike) => {
-    if (!Blockly.Xml) return;
-    
-    try {
-      // NO hacer refresh si el workspace está en modo drag o si hay interacción activa
-      const wsSvg = ws as any;
-      if (wsSvg.isDragging && wsSvg.isDragging()) {
-        // Está en modo drag, cancelar el refresh
-        return;
-      }
-      
-      // Guardar el estado actual del workspace
-      const xml = Blockly.Xml.workspaceToDom(ws);
-      const xmlText = Blockly.Xml.domToText(xml);
-      
-      // Limpiar y recargar para forzar re-render completo
-      ws.clear?.();
-      const xmlDom = Blockly.Xml.textToDom(xmlText);
-      Blockly.Xml.domToWorkspace(xmlDom, ws);
-      
-      // Limpiar el timeout del Map después de ejecutar
-      workspaceRefreshTimeouts.delete(ws);
-    } catch (error) {
-      // Ignorar errores silenciosamente
-      workspaceRefreshTimeouts.delete(ws);
-    }
-  };
-  
-  // Interceptar setValue solo una vez (a nivel global)
-  if (!(Blockly as any).__fieldNumberSetValueIntercepted) {
-    const originalSetValue = (Blockly as any).FieldNumber?.prototype?.setValue;
-    if (originalSetValue && typeof originalSetValue === "function") {
-      (Blockly as any).FieldNumber.prototype.setValue = function(newValue: any) {
-        // Obtener valor anterior para comparar
-        const oldValue = this.getValue ? this.getValue() : null;
-        
-        // Llamar al método original
-        const result = originalSetValue.call(this, newValue);
-        
-        // Solo hacer refresh si el valor realmente cambió
-        const valueChanged = oldValue !== newValue && String(oldValue) !== String(newValue);
-        
-        if (valueChanged) {
-          // Verificar si el bloque está en un workspace válido
-          const sourceBlock = this.sourceBlock_;
-          if (sourceBlock) {
-            const ws = sourceBlock.workspace;
-            if (ws && Blockly.Xml) {
-              // Verificar que no estemos en modo drag
-              const wsSvg = ws as any;
-              if (wsSvg.isDragging && wsSvg.isDragging()) {
-                // Está en modo drag, no hacer refresh ahora
-                return result;
-              }
-              
-              // Cancelar timeout anterior para este workspace si existe
-              const existingTimeout = workspaceRefreshTimeouts.get(ws);
-              if (existingTimeout !== undefined) {
-                clearTimeout(existingTimeout);
-              }
-              
-              // Programar refresh con debounce
-              const timeoutId = window.setTimeout(() => {
-                // Verificar nuevamente que no estemos en drag antes de refrescar
-                const wsSvgCheck = ws as any;
-                if (!wsSvgCheck.isDragging || !wsSvgCheck.isDragging()) {
-                  refreshWorkspace(ws as WorkspaceLike);
-                } else {
-                  workspaceRefreshTimeouts.delete(ws);
-                }
-              }, REFRESH_DELAY);
-              
-              workspaceRefreshTimeouts.set(ws, timeoutId);
-            }
-          }
-        }
-        
-        return result;
-      };
-      
-      // Marcar como interceptado para evitar múltiples interceptaciones
-      (Blockly as any).__fieldNumberSetValueIntercepted = true;
-    }
-  }
-  
   const workspace = Blockly.inject(mountEl, {
     toolbox: toolboxXml,
     horizontalLayout: opts.horizontalLayout ?? true,
@@ -203,49 +111,17 @@ export const createWorkspace = (
     }
   };
 
-  // Listener para detectar cambios en shadow blocks y forzar re-render completo
-  // Esto maneja el caso cuando el usuario edita valores directamente en el workspace
-  const forceBlockRender = (event?: any) => {
-    // Ignorar solo eventos UI puros (movimientos)
-    if (event?.type && Blockly.Events?.UI && event.type === Blockly.Events.UI) {
-      return;
-    }
-
-    try {
-      if (event?.blockId) {
-        const block = (workspace as { getBlockById?: (id: string) => any }).getBlockById?.(event.blockId);
-        if (block) {
-          // Usar requestAnimationFrame para asegurar que se ejecute después de que Blockly procese el evento
-          requestAnimationFrame(() => {
-            try {
-              // Si es un shadow block, forzar re-render completo del padre y ancestros
-              if (block.isShadow?.()) {
-                const parent = block.getParent?.();
-                if (parent) {
-                  // Re-renderizar el shadow block primero
-                  forceCompleteRender(block);
-                  // Luego re-renderizar el padre y todos sus ancestros
-                  forceCompleteRender(parent);
-                } else {
-                  // Si no tiene padre, solo re-renderizar el bloque mismo
-                  forceCompleteRender(block);
-                }
-              } else {
-                // Para bloques normales, también forzar re-render completo con ancestros
-                forceCompleteRender(block);
-              }
-            } catch (error) {
-              // Ignorar errores silenciosamente
-            }
-          });
-        }
-      }
-    } catch (error) {
-      // Ignorar errores silenciosamente
-    }
-  };
-
-  workspace.addChangeListener(forceBlockRender);
+  // Listener simplificado: solo detectar cambios específicos en campos numéricos
+  // Desactivado temporalmente porque estaba interrumpiendo las interacciones del usuario
+  // TODO: Implementar una solución más específica que no interrumpa drag/click
+  // const forceBlockRender = (event?: any) => {
+  //   // Ignorar eventos UI (movimientos, drags)
+  //   if (event?.type && Blockly.Events?.UI && event.type === Blockly.Events.UI) {
+  //     return;
+  //   }
+  //   // TODO: Solo procesar eventos de cambio específicos en campos numéricos
+  // };
+  // workspace.addChangeListener(forceBlockRender);
 
   if (opts.fixedStartBlock) {
     let ensuring = false;
