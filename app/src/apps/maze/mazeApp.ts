@@ -165,7 +165,8 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   
   // Actualizar status en su nuevo contenedor
   if (statusEl) {
-    statusEl.textContent = updateStatusText(ctx.getState?.() as MazeState | undefined);
+    const state = ctx.getState?.() as MazeState | undefined;
+    statusEl.textContent = state ? updateStatusText(state) : "Listo.";
   }
   
   return mazeUI;
