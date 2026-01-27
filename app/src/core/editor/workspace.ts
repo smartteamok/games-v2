@@ -83,19 +83,28 @@ export const createWorkspace = (
 
   // Estrategia 1: Event Listener específico para cambios en campos numéricos de shadow blocks
   // Escucha solo cambios de tipo "field" y filtra por shadow blocks conectados a inputs numéricos
-  // Espera a que el usuario presione Enter antes de refrescar
+  // Refresh inmediato al presionar Enter, o automático después de 1.5s sin cambios
   const pendingRefreshFields = new WeakMap<any, Set<string>>(); // Track campos pendientes de refresh
   const enterKeyListeners = new WeakMap<any, (e: KeyboardEvent) => void>(); // Track listeners de Enter por workspace
+  const refreshTimeouts = new WeakMap<any, ReturnType<typeof setTimeout>>(); // Timers de debounce por workspace
+  const REFRESH_DEBOUNCE_MS = 1500; // 1.5 segundos sin cambios antes de refresh automático
 
-  const refreshWorkspace = (ws: any, BlocklyInstance: BlocklyLike) => {
+  const refreshWorkspace = (ws: any, BlocklyInstance: BlocklyLike, cancelDebounce: boolean = false) => {
+    // Cancelar timer de debounce si existe
+    if (cancelDebounce) {
+      const existingTimeout = refreshTimeouts.get(ws);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        refreshTimeouts.delete(ws);
+      }
+    }
+
     // Verificar que no hay interacciones activas
     if (ws?.isDragging?.()) {
       return;
     }
 
     try {
-      console.log("🔄 Ejecutando refresh del workspace...");
-
       // Guardar estado actual del workspace
       const xml = BlocklyInstance.Xml?.workspaceToDom(ws);
       if (!xml) return;
@@ -120,6 +129,34 @@ export const createWorkspace = (
     } catch (error) {
       // Silenciar errores de refresh
     }
+  };
+
+  const scheduleDebouncedRefresh = (ws: any, BlocklyInstance: BlocklyLike) => {
+    // Cancelar timeout anterior si existe
+    const existingTimeout = refreshTimeouts.get(ws);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Crear nuevo timeout
+    const timeout = setTimeout(() => {
+      // Verificar una última vez que no hay interacciones activas
+      if (ws?.isDragging?.()) {
+        return;
+      }
+
+      // Verificar que hay campos pendientes
+      const pendingFields = pendingRefreshFields.get(ws);
+      if (!pendingFields || pendingFields.size === 0) {
+        return;
+      }
+
+      // Hacer refresh
+      refreshWorkspace(ws, BlocklyInstance);
+      refreshTimeouts.delete(ws);
+    }, REFRESH_DEBOUNCE_MS);
+
+    refreshTimeouts.set(ws, timeout);
   };
 
   // Configurar listener de Enter para detectar cuando el usuario presiona Enter en el editor
@@ -149,10 +186,8 @@ export const createWorkspace = (
         return;
       }
 
-      console.log("⌨️ Enter presionado, haciendo refresh...");
-
-      // Hacer refresh inmediato
-      refreshWorkspace(ws, BlocklyInstance);
+      // Hacer refresh inmediato y cancelar cualquier debounce pendiente
+      refreshWorkspace(ws, BlocklyInstance, true);
     };
 
     // Agregar listener al document para capturar todos los eventos de teclado
@@ -165,6 +200,12 @@ export const createWorkspace = (
       ws.dispose = function() {
         document.removeEventListener("keydown", handleKeyDown);
         enterKeyListeners.delete(ws);
+        // Limpiar timer de debounce si existe
+        const timeout = refreshTimeouts.get(ws);
+        if (timeout) {
+          clearTimeout(timeout);
+          refreshTimeouts.delete(ws);
+        }
         originalDispose.call(this);
       };
     }
@@ -221,7 +262,9 @@ export const createWorkspace = (
     }
 
     // Marcar este campo como pendiente de refresh
-    // El refresh se ejecutará cuando el usuario presione Enter (detectado por el listener de teclado)
+    // El refresh se ejecutará cuando:
+    // 1. El usuario presione Enter (inmediato, detectado por el listener de teclado)
+    // 2. Pase 1.5 segundos sin cambios (automático, usando debounce)
     let pendingFields = pendingRefreshFields.get(workspace);
     if (!pendingFields) {
       pendingFields = new Set();
@@ -229,6 +272,9 @@ export const createWorkspace = (
     }
     const fieldKey = `${event.blockId}:${event.name}`;
     pendingFields.add(fieldKey);
+
+    // Programar refresh con debounce (se reseteará si hay más cambios)
+    scheduleDebouncedRefresh(workspace, Blockly);
   });
 
   if (opts.fixedStartBlock) {
