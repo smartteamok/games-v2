@@ -68,7 +68,42 @@ export const createWorkspace = (
     scrollbars: opts.scrollbars ?? true
   }) as WorkspaceLike;
 
-  // Listener para detectar cambios en shadow blocks y forzar re-render del padre
+  /**
+   * Fuerza re-render completo de un bloque y todos sus ancestros
+   * Estrategia agresiva: invalida métricas y re-renderiza toda la cadena de bloques
+   */
+  const forceCompleteRender = (block: any): void => {
+    if (!block || !block.rendered) {
+      return;
+    }
+
+    // Invalidar métricas del bloque actual
+    if (block.renderingMetrics_ !== undefined) {
+      block.renderingMetrics_ = null;
+    }
+
+    // Re-renderizar el bloque actual
+    if (typeof block.render === "function") {
+      block.render(true); // true = forzar re-render completo
+    }
+
+    // Re-renderizar todos los ancestros (bloques padre, abuelo, etc.)
+    let currentParent = block.getParent?.();
+    while (currentParent && currentParent.rendered) {
+      // Invalidar métricas del padre
+      if (currentParent.renderingMetrics_ !== undefined) {
+        currentParent.renderingMetrics_ = null;
+      }
+      // Re-renderizar el padre
+      if (typeof currentParent.render === "function") {
+        currentParent.render(true);
+      }
+      // Subir al siguiente nivel
+      currentParent = currentParent.getParent?.();
+    }
+  };
+
+  // Listener para detectar cambios en shadow blocks y forzar re-render completo
   // Esto maneja el caso cuando el usuario edita valores directamente en el workspace
   const forceBlockRender = (event?: any) => {
     // Ignorar solo eventos UI puros (movimientos)
@@ -80,21 +115,29 @@ export const createWorkspace = (
       if (event?.blockId) {
         const block = (workspace as { getBlockById?: (id: string) => any }).getBlockById?.(event.blockId);
         if (block) {
-          // Si es un shadow block, forzar re-render completo del padre
-          if (block.isShadow?.()) {
-            const parent = block.getParent?.();
-            if (parent && parent.rendered) {
-              // Invalidar métricas para forzar re-render completo
-              parent.renderingMetrics_ = null;
-              // Usar render(true) para forzar re-render incluso si las métricas no cambiaron
-              parent.render?.(true);
+          // Usar requestAnimationFrame para asegurar que se ejecute después de que Blockly procese el evento
+          requestAnimationFrame(() => {
+            try {
+              // Si es un shadow block, forzar re-render completo del padre y ancestros
+              if (block.isShadow?.()) {
+                const parent = block.getParent?.();
+                if (parent) {
+                  // Re-renderizar el shadow block primero
+                  forceCompleteRender(block);
+                  // Luego re-renderizar el padre y todos sus ancestros
+                  forceCompleteRender(parent);
+                } else {
+                  // Si no tiene padre, solo re-renderizar el bloque mismo
+                  forceCompleteRender(block);
+                }
+              } else {
+                // Para bloques normales, también forzar re-render completo con ancestros
+                forceCompleteRender(block);
+              }
+            } catch (error) {
+              // Ignorar errores silenciosamente
             }
-          }
-          
-          // También re-renderizar el bloque mismo
-          if (block.rendered) {
-            block.render?.(true);
-          }
+          });
         }
       }
     } catch (error) {

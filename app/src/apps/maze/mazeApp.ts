@@ -422,24 +422,58 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
       });
       this.setTooltip("Repetir varias veces");
       
-      // Forzar re-render cuando cambia el valor del input
-      // Esto maneja cambios cuando el usuario edita directamente en el workspace
+      // Forzar re-render completo cuando cambia el valor del input
+      // Estrategia agresiva: re-renderizar shadow block, bloque padre y todos los ancestros
       const blockInstance = this;
       this.setOnChange(function(changeEvent: any) {
         if (changeEvent && changeEvent.type === "change") {
           const input = blockInstance.getInput("TIMES");
           if (input) {
             const connectedBlock = input.connection?.targetBlock?.();
-            if (connectedBlock && connectedBlock.rendered) {
-              // Invalidar métricas y forzar re-render completo
-              connectedBlock.renderingMetrics_ = null;
-              connectedBlock.render?.(true);
-            }
-            // Re-renderizar el bloque padre
-            if (blockInstance.rendered) {
-              blockInstance.renderingMetrics_ = null;
-              blockInstance.render?.(true);
-            }
+            
+            // Usar requestAnimationFrame para asegurar que se ejecute después del cambio
+            requestAnimationFrame(() => {
+              try {
+                // Función helper para forzar re-render completo con ancestros
+                const forceCompleteRender = (block: any): void => {
+                  if (!block || !block.rendered) return;
+                  
+                  // Invalidar métricas
+                  if (block.renderingMetrics_ !== undefined) {
+                    block.renderingMetrics_ = null;
+                  }
+                  
+                  // Re-renderizar
+                  if (typeof block.render === "function") {
+                    block.render(true);
+                  }
+                  
+                  // Re-renderizar ancestros
+                  let parent = block.getParent?.();
+                  while (parent && parent.rendered) {
+                    if (parent.renderingMetrics_ !== undefined) {
+                      parent.renderingMetrics_ = null;
+                    }
+                    if (typeof parent.render === "function") {
+                      parent.render(true);
+                    }
+                    parent = parent.getParent?.();
+                  }
+                };
+
+                // Re-renderizar el shadow block y sus ancestros
+                if (connectedBlock && connectedBlock.rendered) {
+                  forceCompleteRender(connectedBlock);
+                }
+                
+                // Re-renderizar el bloque padre (game_repeat) y todos sus ancestros
+                if (blockInstance.rendered) {
+                  forceCompleteRender(blockInstance);
+                }
+              } catch (error) {
+                // Ignorar errores silenciosamente
+              }
+            });
           }
         }
       });
@@ -471,24 +505,58 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
       });
       this.setTooltip("Esperar milisegundos");
       
-      // Forzar re-render cuando cambia el valor del input
-      // Esto maneja cambios cuando el usuario edita directamente en el workspace
+      // Forzar re-render completo cuando cambia el valor del input
+      // Estrategia agresiva: re-renderizar shadow block, bloque padre y todos los ancestros
       const blockInstance = this;
       this.setOnChange(function(changeEvent: any) {
         if (changeEvent && changeEvent.type === "change") {
           const input = blockInstance.getInput("MS");
           if (input) {
             const connectedBlock = input.connection?.targetBlock?.();
-            if (connectedBlock && connectedBlock.rendered) {
-              // Invalidar métricas y forzar re-render completo
-              connectedBlock.renderingMetrics_ = null;
-              connectedBlock.render?.(true);
-            }
-            // Re-renderizar el bloque padre
-            if (blockInstance.rendered) {
-              blockInstance.renderingMetrics_ = null;
-              blockInstance.render?.(true);
-            }
+            
+            // Usar requestAnimationFrame para asegurar que se ejecute después del cambio
+            requestAnimationFrame(() => {
+              try {
+                // Función helper para forzar re-render completo con ancestros
+                const forceCompleteRender = (block: any): void => {
+                  if (!block || !block.rendered) return;
+                  
+                  // Invalidar métricas
+                  if (block.renderingMetrics_ !== undefined) {
+                    block.renderingMetrics_ = null;
+                  }
+                  
+                  // Re-renderizar
+                  if (typeof block.render === "function") {
+                    block.render(true);
+                  }
+                  
+                  // Re-renderizar ancestros
+                  let parent = block.getParent?.();
+                  while (parent && parent.rendered) {
+                    if (parent.renderingMetrics_ !== undefined) {
+                      parent.renderingMetrics_ = null;
+                    }
+                    if (typeof parent.render === "function") {
+                      parent.render(true);
+                    }
+                    parent = parent.getParent?.();
+                  }
+                };
+
+                // Re-renderizar el shadow block y sus ancestros
+                if (connectedBlock && connectedBlock.rendered) {
+                  forceCompleteRender(connectedBlock);
+                }
+                
+                // Re-renderizar el bloque padre (game_wait) y todos sus ancestros
+                if (blockInstance.rendered) {
+                  forceCompleteRender(blockInstance);
+                }
+              } catch (error) {
+                // Ignorar errores silenciosamente
+              }
+            });
           }
         }
       });
