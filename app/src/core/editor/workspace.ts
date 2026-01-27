@@ -78,6 +78,13 @@ export const createWorkspace = (
     if (!Blockly.Xml) return;
     
     try {
+      // NO hacer refresh si el workspace está en modo drag o si hay interacción activa
+      const wsSvg = ws as any;
+      if (wsSvg.isDragging && wsSvg.isDragging()) {
+        // Está en modo drag, cancelar el refresh
+        return;
+      }
+      
       // Guardar el estado actual del workspace
       const xml = Blockly.Xml.workspaceToDom(ws);
       const xmlText = Blockly.Xml.domToText(xml);
@@ -100,26 +107,47 @@ export const createWorkspace = (
     const originalSetValue = (Blockly as any).FieldNumber?.prototype?.setValue;
     if (originalSetValue && typeof originalSetValue === "function") {
       (Blockly as any).FieldNumber.prototype.setValue = function(newValue: any) {
+        // Obtener valor anterior para comparar
+        const oldValue = this.getValue ? this.getValue() : null;
+        
         // Llamar al método original
         const result = originalSetValue.call(this, newValue);
         
-        // Verificar si el bloque está en un workspace válido
-        const sourceBlock = this.sourceBlock_;
-        if (sourceBlock) {
-          const ws = sourceBlock.workspace;
-          if (ws && Blockly.Xml) {
-            // Cancelar timeout anterior para este workspace si existe
-            const existingTimeout = workspaceRefreshTimeouts.get(ws);
-            if (existingTimeout !== undefined) {
-              clearTimeout(existingTimeout);
+        // Solo hacer refresh si el valor realmente cambió
+        const valueChanged = oldValue !== newValue && String(oldValue) !== String(newValue);
+        
+        if (valueChanged) {
+          // Verificar si el bloque está en un workspace válido
+          const sourceBlock = this.sourceBlock_;
+          if (sourceBlock) {
+            const ws = sourceBlock.workspace;
+            if (ws && Blockly.Xml) {
+              // Verificar que no estemos en modo drag
+              const wsSvg = ws as any;
+              if (wsSvg.isDragging && wsSvg.isDragging()) {
+                // Está en modo drag, no hacer refresh ahora
+                return result;
+              }
+              
+              // Cancelar timeout anterior para este workspace si existe
+              const existingTimeout = workspaceRefreshTimeouts.get(ws);
+              if (existingTimeout !== undefined) {
+                clearTimeout(existingTimeout);
+              }
+              
+              // Programar refresh con debounce
+              const timeoutId = window.setTimeout(() => {
+                // Verificar nuevamente que no estemos en drag antes de refrescar
+                const wsSvgCheck = ws as any;
+                if (!wsSvgCheck.isDragging || !wsSvgCheck.isDragging()) {
+                  refreshWorkspace(ws as WorkspaceLike);
+                } else {
+                  workspaceRefreshTimeouts.delete(ws);
+                }
+              }, REFRESH_DELAY);
+              
+              workspaceRefreshTimeouts.set(ws, timeoutId);
             }
-            
-            // Programar refresh con debounce
-            const timeoutId = window.setTimeout(() => {
-              refreshWorkspace(ws as WorkspaceLike);
-            }, REFRESH_DELAY);
-            
-            workspaceRefreshTimeouts.set(ws, timeoutId);
           }
         }
         
