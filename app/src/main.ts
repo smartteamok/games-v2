@@ -9,6 +9,7 @@ import { loadProject } from "./core/storage/projectStore";
 import { apps, getDefaultApp, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
+import { toggleSkillsPanel } from "./apps/maze/mazeApp";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -21,6 +22,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <button id="btnRun" class="toolbar-btn toolbar-btn-run" title="Ejecutar programa">
         <img src="${BASE_URL}icons/play.svg" alt="Run" class="btn-icon" />
         <span>Run</span>
+      </button>
+      <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
+        <span>Habilidades</span>
       </button>
       <span id="status" class="status"></span>
     </div>
@@ -137,6 +141,10 @@ function switchGame(appId: string): void {
 
 gameSelect.addEventListener("change", () => {
   switchGame(gameSelect.value);
+});
+
+document.getElementById("btnSkills")!.addEventListener("click", () => {
+  toggleSkillsPanel();
 });
 
 document.getElementById("btnRun")!.addEventListener("click", () => {

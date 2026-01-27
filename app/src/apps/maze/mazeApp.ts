@@ -25,6 +25,8 @@ type MazeUI = {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   statusEl: HTMLDivElement;
+  skillsPanel?: HTMLElement;
+  skillsPanelOverlay?: HTMLElement;
 };
 
 // Estado de animación temporal
@@ -57,6 +59,8 @@ const DIR_DELTAS: Record<Direction, { x: number; y: number }> = {
 
 let ui: MazeUI | null = null;
 let animationState: AnimationState = null;
+let skillsPanel: HTMLElement | null = null;
+let skillsPanelOverlay: HTMLElement | null = null;
 
 const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
@@ -134,12 +138,87 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   container.appendChild(statusEl);
   rootEl.appendChild(container);
 
+  // Crear panel lateral de skills solo una vez
+  if (!skillsPanel) {
+    skillsPanel = createSkillsPanel();
+    skillsPanelOverlay = createSkillsPanelOverlay(skillsPanel);
+    document.body.appendChild(skillsPanelOverlay);
+    document.body.appendChild(skillsPanel);
+  }
+
   // Guardar contexto en rootEl para acceso desde updateProgressBar
   (rootEl as any).__renderContext = ctx;
 
-  ui = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl };
+  ui = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay };
   updateProgressBar(ctx.getState?.() as MazeState | undefined);
   return ui;
+};
+
+const createSkillsPanel = (): HTMLElement => {
+  const panel = document.createElement("div");
+  panel.className = "skills-panel";
+  
+  const header = document.createElement("div");
+  header.className = "skills-panel-header";
+  
+  const title = document.createElement("h2");
+  title.className = "skills-panel-title";
+  title.textContent = "Habilidades";
+  
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "skills-panel-close";
+  closeBtn.innerHTML = "×";
+  closeBtn.setAttribute("aria-label", "Cerrar panel");
+  closeBtn.addEventListener("click", () => closeSkillsPanel());
+  
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  
+  const content = document.createElement("div");
+  content.className = "skills-panel-content";
+  content.innerHTML = "<p class='skills-placeholder'>Las habilidades se mostrarán aquí.</p>";
+  
+  panel.appendChild(header);
+  panel.appendChild(content);
+  
+  return panel;
+};
+
+const createSkillsPanelOverlay = (panel: HTMLElement): HTMLElement => {
+  const overlay = document.createElement("div");
+  overlay.className = "skills-panel-overlay";
+  overlay.addEventListener("click", () => closeSkillsPanel());
+  return overlay;
+};
+
+const openSkillsPanel = (): void => {
+  const panel = skillsPanel || (document.querySelector(".skills-panel") as HTMLElement);
+  const overlay = skillsPanelOverlay || (document.querySelector(".skills-panel-overlay") as HTMLElement);
+  if (panel && overlay) {
+    panel.classList.add("open");
+    overlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+};
+
+const closeSkillsPanel = (): void => {
+  const panel = skillsPanel || (document.querySelector(".skills-panel") as HTMLElement);
+  const overlay = skillsPanelOverlay || (document.querySelector(".skills-panel-overlay") as HTMLElement);
+  if (panel && overlay) {
+    panel.classList.remove("open");
+    overlay.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+};
+
+// Exportar función para abrir el panel desde main.ts
+export const toggleSkillsPanel = (): void => {
+  const panel = document.querySelector(".skills-panel") as HTMLElement;
+  if (panel?.classList.contains("open")) {
+    closeSkillsPanel();
+  } else {
+    openSkillsPanel();
+  }
 };
 
 const updateProgressBar = (state?: MazeState): void => {
