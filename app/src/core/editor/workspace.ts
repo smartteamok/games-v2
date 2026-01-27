@@ -188,20 +188,22 @@ export const createWorkspace = (
 
     console.log("✅ Es shadow block");
 
-    // Verificar que el campo cambiado es numérico
+    // Verificar que el campo existe y tiene un nombre válido para campos numéricos
     const field = block.getField?.(event.name || "");
-    console.log("🔍 Campo encontrado:", {
-      name: event.name,
-      field: field,
-      constructorName: field?.constructor?.name
-    });
-
-    if (!field || field.constructor?.name !== "FieldNumber") {
-      console.log("❌ No es FieldNumber");
+    if (!field) {
+      console.log("❌ No se encontró el campo:", event.name);
       return;
     }
 
-    console.log("✅ Es FieldNumber");
+    // Verificar que el nombre del campo es típico de campos numéricos
+    // Los campos numéricos en shadow blocks suelen llamarse "NUM", "N", "VALUE", etc.
+    const numericFieldNames = ["NUM", "N", "VALUE", "MS", "SECS", "TIMES", "DURATION", "STEPS"];
+    if (!event.name || !numericFieldNames.includes(event.name)) {
+      console.log("❌ El nombre del campo no es numérico:", event.name);
+      return;
+    }
+
+    console.log("✅ Campo numérico válido:", event.name);
 
     // Verificar que el valor realmente cambió
     if (event.oldValue === event.newValue) {
