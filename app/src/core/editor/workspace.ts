@@ -59,6 +59,70 @@ export const createWorkspace = (
   opts: WorkspaceOptions = {}
 ): unknown => {
   const BASE_URL = import.meta.env.BASE_URL;
+  
+  // Interceptar setValue de FieldNumber para forzar re-render después de cada cambio
+  // Esto captura TODOS los cambios, sin importar cómo se actualicen los valores
+  const originalSetValue = (Blockly as any).FieldNumber?.prototype?.setValue;
+  if (originalSetValue && typeof originalSetValue === "function") {
+    (Blockly as any).FieldNumber.prototype.setValue = function(newValue: any) {
+      // Llamar al método original
+      const result = originalSetValue.call(this, newValue);
+      
+      // Después de actualizar el valor, forzar re-render del bloque padre
+      const sourceBlock = this.sourceBlock_;
+      if (sourceBlock) {
+        // Usar requestAnimationFrame para asegurar timing correcto
+        requestAnimationFrame(() => {
+          try {
+            // Función para forzar re-render completo con ancestros
+            const forceCompleteRender = (block: any): void => {
+              if (!block || !block.rendered) return;
+              
+              // Invalidar métricas
+              if (block.renderingMetrics_ !== undefined) {
+                block.renderingMetrics_ = null;
+              }
+              
+              // Re-renderizar
+              if (typeof block.render === "function") {
+                block.render(true);
+              }
+              
+              // Re-renderizar ancestros
+              let parent = block.getParent?.();
+              while (parent && parent.rendered) {
+                if (parent.renderingMetrics_ !== undefined) {
+                  parent.renderingMetrics_ = null;
+                }
+                if (typeof parent.render === "function") {
+                  parent.render(true);
+                }
+                parent = parent.getParent?.();
+              }
+            };
+            
+            // Si es un shadow block, re-renderizar el padre también
+            if (sourceBlock.isShadow?.()) {
+              const parent = sourceBlock.getParent?.();
+              if (parent) {
+                forceCompleteRender(sourceBlock);
+                forceCompleteRender(parent);
+              } else {
+                forceCompleteRender(sourceBlock);
+              }
+            } else {
+              forceCompleteRender(sourceBlock);
+            }
+          } catch (error) {
+            // Ignorar errores silenciosamente
+          }
+        });
+      }
+      
+      return result;
+    };
+  }
+  
   const workspace = Blockly.inject(mountEl, {
     toolbox: toolboxXml,
     horizontalLayout: opts.horizontalLayout ?? true,
