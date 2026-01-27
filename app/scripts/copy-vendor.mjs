@@ -14,6 +14,11 @@ await cp(
   { force: true }
 );
 await cp(
+  join(srcRoot, "blocks_compressed.js"),
+  join(vendorRoot, "blocks_compressed.js"),
+  { force: true }
+);
+await cp(
   join(srcRoot, "blocks_compressed_horizontal.js"),
   join(vendorRoot, "blocks_compressed_horizontal.js"),
   { force: true }

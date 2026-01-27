@@ -67,6 +67,42 @@ export const createWorkspace = (
     scrollbars: opts.scrollbars ?? true
   }) as WorkspaceLike;
 
+  // Listener para detectar cambios en shadow blocks y forzar re-render del padre
+  // Esto maneja el caso cuando el usuario edita valores directamente en el workspace
+  const forceBlockRender = (event?: any) => {
+    // Ignorar solo eventos UI puros (movimientos)
+    if (event?.type && Blockly.Events?.UI && event.type === Blockly.Events.UI) {
+      return;
+    }
+
+    try {
+      if (event?.blockId) {
+        const block = (workspace as { getBlockById?: (id: string) => any }).getBlockById?.(event.blockId);
+        if (block) {
+          // Si es un shadow block, forzar re-render completo del padre
+          if (block.isShadow?.()) {
+            const parent = block.getParent?.();
+            if (parent && parent.rendered) {
+              // Invalidar métricas para forzar re-render completo
+              parent.renderingMetrics_ = null;
+              // Usar render(true) para forzar re-render incluso si las métricas no cambiaron
+              parent.render?.(true);
+            }
+          }
+          
+          // También re-renderizar el bloque mismo
+          if (block.rendered) {
+            block.render?.(true);
+          }
+        }
+      }
+    } catch (error) {
+      // Ignorar errores silenciosamente
+    }
+  };
+
+  workspace.addChangeListener(forceBlockRender);
+
   if (opts.fixedStartBlock) {
     let ensuring = false;
     const ensure = (event?: { type?: string }) => {
