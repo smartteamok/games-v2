@@ -341,54 +341,6 @@ const drawMaze = (state: MazeState): void => {
 };
 
 export const registerMazeLikeBlocks = (Blockly: any) => {
-  // Helper para hacer refresh del workspace (save/load) con debounce
-  // Esta es la estrategia más simple: solo refrescar cuando cambia un campo numérico
-  const refreshTimeouts = new WeakMap<any, ReturnType<typeof setTimeout>>();
-  const REFRESH_DEBOUNCE_MS = 200;
-
-  const refreshWorkspaceDebounced = (workspace: any) => {
-    // Verificar que no hay interacciones activas
-    if (workspace?.isDragging?.()) {
-      return;
-    }
-
-    // Limpiar timeout anterior si existe
-    const existingTimeout = refreshTimeouts.get(workspace);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
-
-    // Crear nuevo timeout para hacer refresh
-    const timeout = setTimeout(() => {
-      try {
-        // Verificar una última vez que no hay interacciones activas
-        if (workspace?.isDragging?.()) {
-          return;
-        }
-
-        // Guardar estado actual del workspace
-        const xml = Blockly.Xml?.workspaceToDom(workspace);
-        if (!xml) return;
-
-        const xmlText = Blockly.Xml?.domToText(xml);
-        if (!xmlText) return;
-
-        // Limpiar workspace
-        workspace.clear?.();
-
-        // Restaurar desde XML (esto fuerza un re-render completo)
-        const dom = Blockly.Xml?.textToDom(xmlText);
-        Blockly.Xml?.domToWorkspace(dom, workspace);
-      } catch (error) {
-        console.error("Error en refreshWorkspace:", error);
-      } finally {
-        refreshTimeouts.delete(workspace);
-      }
-    }, REFRESH_DEBOUNCE_MS);
-
-    refreshTimeouts.set(workspace, timeout);
-  };
-
   Blockly.Blocks["game_move"] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -469,36 +421,6 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
         colourQuaternary: Blockly.Colours?.control?.quaternary
       });
       this.setTooltip("Repetir varias veces");
-      
-      // Estrategia simple: hacer save/load cuando cambia el campo numérico del shadow block
-      const blockInstance = this;
-      this.setOnChange(function(changeEvent: any) {
-        // Solo procesar cambios de tipo "field" (cambios en campos)
-        if (changeEvent?.element !== "field") {
-          return;
-        }
-
-        // Obtener el input TIMES
-        const input = blockInstance.getInput("TIMES");
-        if (!input) return;
-
-        // Obtener el bloque conectado (shadow block)
-        const connectedBlock = input.connection?.targetBlock?.();
-        if (!connectedBlock) return;
-
-        // Verificar que el cambio ocurrió en el shadow block conectado
-        if (changeEvent.blockId !== connectedBlock.id) return;
-
-        // Verificar que el campo cambiado es numérico
-        const field = connectedBlock.getField?.(changeEvent.name);
-        if (!field || field.constructor?.name !== "FieldNumber") return;
-
-        // Hacer refresh del workspace con debounce
-        const workspace = blockInstance.workspace;
-        if (workspace) {
-          refreshWorkspaceDebounced(workspace);
-        }
-      });
     }
   };
 
@@ -526,36 +448,6 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
         colourQuaternary: Blockly.Colours?.control?.quaternary
       });
       this.setTooltip("Esperar milisegundos");
-      
-      // Estrategia simple: hacer save/load cuando cambia el campo numérico del shadow block
-      const blockInstance = this;
-      this.setOnChange(function(changeEvent: any) {
-        // Solo procesar cambios de tipo "field" (cambios en campos)
-        if (changeEvent?.element !== "field") {
-          return;
-        }
-
-        // Obtener el input MS
-        const input = blockInstance.getInput("MS");
-        if (!input) return;
-
-        // Obtener el bloque conectado (shadow block)
-        const connectedBlock = input.connection?.targetBlock?.();
-        if (!connectedBlock) return;
-
-        // Verificar que el cambio ocurrió en el shadow block conectado
-        if (changeEvent.blockId !== connectedBlock.id) return;
-
-        // Verificar que el campo cambiado es numérico
-        const field = connectedBlock.getField?.(changeEvent.name);
-        if (!field || field.constructor?.name !== "FieldNumber") return;
-
-        // Hacer refresh del workspace con debounce
-        const workspace = blockInstance.workspace;
-        if (workspace) {
-          refreshWorkspaceDebounced(workspace);
-        }
-      });
     }
   };
 };
