@@ -161,17 +161,29 @@ body {
 .stage {
   width: 360px;
   border-right: 1px solid var(--color-border);
-  background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+  background: linear-gradient(135deg, #E9D5FF 0%, #F3E8FF 50%, #E9D5FF 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   color: var(--color-text);
   font-size: 0.95rem;
-  padding: 16px;
+  padding: 20px;
   box-sizing: border-box;
   overflow: auto;
   box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .stage-placeholder {
@@ -199,9 +211,11 @@ body {
   justify-content: center;
   flex-wrap: wrap;
   padding: 12px;
-  background: var(--color-bg-light);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
   border-radius: 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .maze-progress-level {
@@ -329,15 +343,17 @@ body {
 }
 
 .maze-canvas {
-  border: 2px solid var(--color-border);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   background: var(--color-bg);
-  box-shadow: var(--shadow-md);
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.3s ease;
+  align-self: center;
 }
 
 .maze-canvas:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .maze-status {
@@ -347,7 +363,10 @@ body {
   font-weight: 500;
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--color-bg-light);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -384,9 +403,6 @@ body {
   }
 }
 
-.maze-canvas {
-  transition: border-color 0.3s ease, transform 0.3s ease;
-}
 
 /* Mensaje de éxito */
 .success-message {
