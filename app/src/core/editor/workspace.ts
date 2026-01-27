@@ -140,35 +140,102 @@ export const createWorkspace = (
     oldValue?: any;
     newValue?: any;
   }) => {
+    // DEBUG: Log todos los eventos para entender qué se está disparando
+    if (event) {
+      console.log("🔍 Evento recibido:", {
+        type: event.type,
+        element: event.element,
+        blockId: event.blockId,
+        name: event.name,
+        oldValue: event.oldValue,
+        newValue: event.newValue,
+        fullEvent: event
+      });
+    }
+
     // Solo procesar eventos CHANGE de tipo "field" (cambios en campos)
-    if (!event || event.type !== Blockly.Events?.CHANGE || event.element !== "field") {
+    if (!event) {
+      console.log("❌ No hay evento");
       return;
     }
 
+    if (event.type !== Blockly.Events?.CHANGE) {
+      console.log("❌ No es evento CHANGE, tipo:", event.type, "esperado:", Blockly.Events?.CHANGE);
+      return;
+    }
+
+    if (event.element !== "field") {
+      console.log("❌ No es elemento 'field', elemento:", event.element);
+      return;
+    }
+
+    console.log("✅ Es evento CHANGE de tipo field");
+
     // Obtener el bloque donde ocurrió el cambio
     const block = workspace.getBlockById?.(event.blockId || "");
-    if (!block) return;
+    if (!block) {
+      console.log("❌ No se encontró el bloque con ID:", event.blockId);
+      return;
+    }
+
+    console.log("✅ Bloque encontrado:", block.type, "isShadow:", block.isShadow?.());
 
     // Verificar que es un shadow block
-    if (!block.isShadow?.()) return;
+    if (!block.isShadow?.()) {
+      console.log("❌ No es shadow block");
+      return;
+    }
+
+    console.log("✅ Es shadow block");
 
     // Verificar que el campo cambiado es numérico
     const field = block.getField?.(event.name || "");
-    if (!field || field.constructor?.name !== "FieldNumber") return;
+    console.log("🔍 Campo encontrado:", {
+      name: event.name,
+      field: field,
+      constructorName: field?.constructor?.name
+    });
+
+    if (!field || field.constructor?.name !== "FieldNumber") {
+      console.log("❌ No es FieldNumber");
+      return;
+    }
+
+    console.log("✅ Es FieldNumber");
 
     // Verificar que el valor realmente cambió
-    if (event.oldValue === event.newValue) return;
+    if (event.oldValue === event.newValue) {
+      console.log("❌ El valor no cambió:", event.oldValue, "===", event.newValue);
+      return;
+    }
+
+    console.log("✅ Valor cambió:", event.oldValue, "->", event.newValue);
 
     // Verificar que el shadow block está conectado a un input de un bloque relevante
     const parent = block.getParent?.();
-    if (!parent) return;
+    if (!parent) {
+      console.log("❌ No tiene parent");
+      return;
+    }
+
+    console.log("✅ Parent encontrado:", parent.type);
 
     // Tipos de bloques que tienen inputs numéricos que necesitan refresh
     const relevantTypes = ["game_repeat", "game_wait"];
-    if (!relevantTypes.includes(parent.type)) return;
+    if (!relevantTypes.includes(parent.type)) {
+      console.log("❌ Parent no es relevante:", parent.type, "esperado:", relevantTypes);
+      return;
+    }
+
+    console.log("✅ Parent es relevante:", parent.type);
 
     // Verificar que no hay interacciones activas
-    if (workspace.isDragging?.()) return;
+    if (workspace.isDragging?.()) {
+      console.log("❌ Está haciendo drag");
+      return;
+    }
+
+    console.log("✅ Todas las verificaciones pasaron, haciendo refresh...");
 
     // Hacer refresh del workspace con debounce
     refreshWorkspaceDebounced(workspace, Blockly);
