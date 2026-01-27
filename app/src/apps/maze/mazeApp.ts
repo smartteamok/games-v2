@@ -139,9 +139,14 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
 
   container.appendChild(progressBar);
   container.appendChild(canvas);
-  container.appendChild(statusEl);
   rootEl.appendChild(container);
   rootEl.appendChild(stagePlayButton);
+  
+  // Crear contenedor para el status a la derecha del maze
+  const statusContainer = document.createElement("div");
+  statusContainer.className = "maze-status-container";
+  statusContainer.appendChild(statusEl);
+  rootEl.appendChild(statusContainer);
 
   // Crear panel lateral de skills solo una vez
   if (!skillsPanel) {
@@ -157,6 +162,12 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const mazeUI: MazeUI = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay, stagePlayButton };
   ui = mazeUI;
   updateProgressBar(ctx.getState?.() as MazeState | undefined);
+  
+  // Actualizar status en su nuevo contenedor
+  if (statusEl) {
+    statusEl.textContent = updateStatusText(ctx.getState?.() as MazeState | undefined);
+  }
+  
   return mazeUI;
 };
 

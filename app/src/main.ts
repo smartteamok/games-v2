@@ -35,17 +35,17 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div id="stage" class="stage"></div>
     </div>
 
-    <!-- Franja 3: Canvas de programación -->
-    <div class="editor">
-      <div id="blocklyArea" class="blocklyArea"></div>
-      <div id="blocklyDiv" class="blocklyDiv"></div>
-    </div>
-
-    <!-- Franja 4: Instrucciones disponibles -->
-    <div id="instructions" class="instructions">
-      <h3 class="instructions-title">Instrucciones disponibles</h3>
-      <div class="instructions-content">
-        <p class="instructions-placeholder">Las instrucciones se mostrarán aquí.</p>
+    <!-- Franja 3: Canvas de programación con instrucciones -->
+    <div class="editor-container">
+      <div id="instructions" class="instructions">
+        <h3 class="instructions-title">Instrucciones disponibles</h3>
+        <div class="instructions-content">
+          <p class="instructions-placeholder">Las instrucciones se mostrarán aquí.</p>
+        </div>
+      </div>
+      <div class="editor">
+        <div id="blocklyArea" class="blocklyArea"></div>
+        <div id="blocklyDiv" class="blocklyDiv"></div>
       </div>
     </div>
   </div>

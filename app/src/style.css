@@ -156,7 +156,7 @@ body {
 /* Franja 2: Escenario del juego */
 .game-stage {
   flex: 0 0 auto;
-  min-height: 400px;
+  min-height: 450px;
   background: linear-gradient(135deg, #E9D5FF 0%, #F3E8FF 50%, #E9D5FF 100%);
   background-size: 200% 200%;
   animation: gradientShift 10s ease infinite;
@@ -169,7 +169,7 @@ body {
 
 .stage {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -179,6 +179,14 @@ body {
   padding: 20px;
   box-sizing: border-box;
   position: relative;
+}
+
+.maze-status-container {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
 }
 
 @keyframes gradientShift {
@@ -195,12 +203,18 @@ body {
   text-align: center;
 }
 
-/* Franja 3: Canvas de programación */
+/* Franja 3: Canvas de programación con instrucciones */
+.editor-container {
+  display: flex;
+  flex: 1;
+  min-height: 300px;
+  overflow: hidden;
+}
+
 .editor {
   position: relative;
   flex: 1;
   min-height: 300px;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .maze-stage {
@@ -217,7 +231,7 @@ body {
 /* Botón Play/Restart grande en el stage */
 .stage-play-button {
   position: absolute;
-  left: calc(50% - 350px);
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
   width: 90px;
@@ -233,12 +247,6 @@ body {
   z-index: 100;
   transition: all 0.2s ease;
   color: white;
-}
-
-@media (max-width: 1200px) {
-  .stage-play-button {
-    left: 20px;
-  }
 }
 
 .stage-play-button:hover:not(:disabled) {
@@ -276,35 +284,35 @@ body {
 /* Barra de progreso de niveles */
 .maze-progress-bar {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 12px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .maze-progress-level {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .maze-progress-level:hover:not(:disabled) {
@@ -431,13 +439,14 @@ body {
   color: var(--color-text);
   font-size: 0.95rem;
   font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.7);
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
+  white-space: nowrap;
 }
 
 .blocklyDiv {
@@ -627,28 +636,27 @@ body {
   margin: 40px 0;
 }
 
-/* Franja 4: Instrucciones disponibles */
+/* Instrucciones disponibles - Columna lateral */
 .instructions {
-  flex: 0 0 auto;
-  min-height: 150px;
-  max-height: 200px;
-  background: var(--color-bg-light);
-  border-top: 1px solid var(--color-border);
-  padding: 16px 20px;
+  flex: 0 0 250px;
+  width: 250px;
+  background: #F3F4F6;
+  border-right: 1px solid var(--color-border);
+  padding: 16px;
   overflow-y: auto;
   box-sizing: border-box;
 }
 
 .instructions-title {
   margin: 0 0 12px 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
 .instructions-content {
   color: var(--color-text-light);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1.5;
 }
 
