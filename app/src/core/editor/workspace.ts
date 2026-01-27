@@ -76,52 +76,8 @@ export const createWorkspace = (
     scrollbars: opts.scrollbars ?? true
   }) as WorkspaceLike;
 
-  /**
-   * Fuerza re-render completo de un bloque y todos sus ancestros
-   * Estrategia agresiva: invalida métricas y re-renderiza toda la cadena de bloques
-   */
-  const forceCompleteRender = (block: any): void => {
-    if (!block || !block.rendered) {
-      return;
-    }
-
-    // Invalidar métricas del bloque actual
-    if (block.renderingMetrics_ !== undefined) {
-      block.renderingMetrics_ = null;
-    }
-
-    // Re-renderizar el bloque actual
-    if (typeof block.render === "function") {
-      block.render(true); // true = forzar re-render completo
-    }
-
-    // Re-renderizar todos los ancestros (bloques padre, abuelo, etc.)
-    let currentParent = block.getParent?.();
-    while (currentParent && currentParent.rendered) {
-      // Invalidar métricas del padre
-      if (currentParent.renderingMetrics_ !== undefined) {
-        currentParent.renderingMetrics_ = null;
-      }
-      // Re-renderizar el padre
-      if (typeof currentParent.render === "function") {
-        currentParent.render(true);
-      }
-      // Subir al siguiente nivel
-      currentParent = currentParent.getParent?.();
-    }
-  };
-
-  // Listener simplificado: solo detectar cambios específicos en campos numéricos
-  // Desactivado temporalmente porque estaba interrumpiendo las interacciones del usuario
-  // TODO: Implementar una solución más específica que no interrumpa drag/click
-  // const forceBlockRender = (event?: any) => {
-  //   // Ignorar eventos UI (movimientos, drags)
-  //   if (event?.type && Blockly.Events?.UI && event.type === Blockly.Events.UI) {
-  //     return;
-  //   }
-  //   // TODO: Solo procesar eventos de cambio específicos en campos numéricos
-  // };
-  // workspace.addChangeListener(forceBlockRender);
+  // TODO: Implementar solución para renderizado de números sin interrumpir interacciones
+  // Las funciones de re-render agresivo fueron desactivadas porque interrumpían drag/click
 
   if (opts.fixedStartBlock) {
     let ensuring = false;
