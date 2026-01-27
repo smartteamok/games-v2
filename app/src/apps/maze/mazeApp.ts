@@ -341,6 +341,54 @@ const drawMaze = (state: MazeState): void => {
 };
 
 export const registerMazeLikeBlocks = (Blockly: any) => {
+  // Helper para hacer refresh del workspace (save/load) con debounce
+  // Esta es la estrategia más simple: solo refrescar cuando cambia un campo numérico
+  const refreshTimeouts = new WeakMap<any, ReturnType<typeof setTimeout>>();
+  const REFRESH_DEBOUNCE_MS = 200;
+
+  const refreshWorkspaceDebounced = (workspace: any) => {
+    // Verificar que no hay interacciones activas
+    if (workspace?.isDragging?.()) {
+      return;
+    }
+
+    // Limpiar timeout anterior si existe
+    const existingTimeout = refreshTimeouts.get(workspace);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Crear nuevo timeout para hacer refresh
+    const timeout = setTimeout(() => {
+      try {
+        // Verificar una última vez que no hay interacciones activas
+        if (workspace?.isDragging?.()) {
+          return;
+        }
+
+        // Guardar estado actual del workspace
+        const xml = Blockly.Xml?.workspaceToDom(workspace);
+        if (!xml) return;
+
+        const xmlText = Blockly.Xml?.domToText(xml);
+        if (!xmlText) return;
+
+        // Limpiar workspace
+        workspace.clear?.();
+
+        // Restaurar desde XML (esto fuerza un re-render completo)
+        const dom = Blockly.Xml?.textToDom(xmlText);
+        Blockly.Xml?.domToWorkspace(dom, workspace);
+      } catch (error) {
+        console.error("Error en refreshWorkspace:", error);
+      } finally {
+        refreshTimeouts.delete(workspace);
+      }
+    }, REFRESH_DEBOUNCE_MS);
+
+    refreshTimeouts.set(workspace, timeout);
+  };
+
   Blockly.Blocks["game_move"] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -422,59 +470,33 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
       });
       this.setTooltip("Repetir varias veces");
       
-      // Forzar re-render completo cuando cambia el valor del input
-      // Estrategia agresiva: re-renderizar shadow block, bloque padre y todos los ancestros
+      // Estrategia simple: hacer save/load cuando cambia el campo numérico del shadow block
       const blockInstance = this;
       this.setOnChange(function(changeEvent: any) {
-        if (changeEvent && changeEvent.type === "change") {
-          const input = blockInstance.getInput("TIMES");
-          if (input) {
-            const connectedBlock = input.connection?.targetBlock?.();
-            
-            // Usar requestAnimationFrame para asegurar que se ejecute después del cambio
-            requestAnimationFrame(() => {
-              try {
-                // Función helper para forzar re-render completo con ancestros
-                const forceCompleteRender = (block: any): void => {
-                  if (!block || !block.rendered) return;
-                  
-                  // Invalidar métricas
-                  if (block.renderingMetrics_ !== undefined) {
-                    block.renderingMetrics_ = null;
-                  }
-                  
-                  // Re-renderizar
-                  if (typeof block.render === "function") {
-                    block.render(true);
-                  }
-                  
-                  // Re-renderizar ancestros
-                  let parent = block.getParent?.();
-                  while (parent && parent.rendered) {
-                    if (parent.renderingMetrics_ !== undefined) {
-                      parent.renderingMetrics_ = null;
-                    }
-                    if (typeof parent.render === "function") {
-                      parent.render(true);
-                    }
-                    parent = parent.getParent?.();
-                  }
-                };
+        // Solo procesar cambios de tipo "field" (cambios en campos)
+        if (changeEvent?.element !== "field") {
+          return;
+        }
 
-                // Re-renderizar el shadow block y sus ancestros
-                if (connectedBlock && connectedBlock.rendered) {
-                  forceCompleteRender(connectedBlock);
-                }
-                
-                // Re-renderizar el bloque padre (game_repeat) y todos sus ancestros
-                if (blockInstance.rendered) {
-                  forceCompleteRender(blockInstance);
-                }
-              } catch (error) {
-                // Ignorar errores silenciosamente
-              }
-            });
-          }
+        // Obtener el input TIMES
+        const input = blockInstance.getInput("TIMES");
+        if (!input) return;
+
+        // Obtener el bloque conectado (shadow block)
+        const connectedBlock = input.connection?.targetBlock?.();
+        if (!connectedBlock) return;
+
+        // Verificar que el cambio ocurrió en el shadow block conectado
+        if (changeEvent.blockId !== connectedBlock.id) return;
+
+        // Verificar que el campo cambiado es numérico
+        const field = connectedBlock.getField?.(changeEvent.name);
+        if (!field || field.constructor?.name !== "FieldNumber") return;
+
+        // Hacer refresh del workspace con debounce
+        const workspace = blockInstance.workspace;
+        if (workspace) {
+          refreshWorkspaceDebounced(workspace);
         }
       });
     }
@@ -505,59 +527,33 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
       });
       this.setTooltip("Esperar milisegundos");
       
-      // Forzar re-render completo cuando cambia el valor del input
-      // Estrategia agresiva: re-renderizar shadow block, bloque padre y todos los ancestros
+      // Estrategia simple: hacer save/load cuando cambia el campo numérico del shadow block
       const blockInstance = this;
       this.setOnChange(function(changeEvent: any) {
-        if (changeEvent && changeEvent.type === "change") {
-          const input = blockInstance.getInput("MS");
-          if (input) {
-            const connectedBlock = input.connection?.targetBlock?.();
-            
-            // Usar requestAnimationFrame para asegurar que se ejecute después del cambio
-            requestAnimationFrame(() => {
-              try {
-                // Función helper para forzar re-render completo con ancestros
-                const forceCompleteRender = (block: any): void => {
-                  if (!block || !block.rendered) return;
-                  
-                  // Invalidar métricas
-                  if (block.renderingMetrics_ !== undefined) {
-                    block.renderingMetrics_ = null;
-                  }
-                  
-                  // Re-renderizar
-                  if (typeof block.render === "function") {
-                    block.render(true);
-                  }
-                  
-                  // Re-renderizar ancestros
-                  let parent = block.getParent?.();
-                  while (parent && parent.rendered) {
-                    if (parent.renderingMetrics_ !== undefined) {
-                      parent.renderingMetrics_ = null;
-                    }
-                    if (typeof parent.render === "function") {
-                      parent.render(true);
-                    }
-                    parent = parent.getParent?.();
-                  }
-                };
+        // Solo procesar cambios de tipo "field" (cambios en campos)
+        if (changeEvent?.element !== "field") {
+          return;
+        }
 
-                // Re-renderizar el shadow block y sus ancestros
-                if (connectedBlock && connectedBlock.rendered) {
-                  forceCompleteRender(connectedBlock);
-                }
-                
-                // Re-renderizar el bloque padre (game_wait) y todos sus ancestros
-                if (blockInstance.rendered) {
-                  forceCompleteRender(blockInstance);
-                }
-              } catch (error) {
-                // Ignorar errores silenciosamente
-              }
-            });
-          }
+        // Obtener el input MS
+        const input = blockInstance.getInput("MS");
+        if (!input) return;
+
+        // Obtener el bloque conectado (shadow block)
+        const connectedBlock = input.connection?.targetBlock?.();
+        if (!connectedBlock) return;
+
+        // Verificar que el cambio ocurrió en el shadow block conectado
+        if (changeEvent.blockId !== connectedBlock.id) return;
+
+        // Verificar que el campo cambiado es numérico
+        const field = connectedBlock.getField?.(changeEvent.name);
+        if (!field || field.constructor?.name !== "FieldNumber") return;
+
+        // Hacer refresh del workspace con debounce
+        const workspace = blockInstance.workspace;
+        if (workspace) {
+          refreshWorkspaceDebounced(workspace);
         }
       });
     }
