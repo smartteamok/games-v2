@@ -22,6 +22,7 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .toolbar {
@@ -152,28 +153,31 @@ body {
   font-weight: 500;
 }
 
-.main {
-  position: relative;
-  flex: 1;
-  display: flex;
-}
-
-.stage {
-  width: 360px;
-  border-right: 1px solid var(--color-border);
+/* Franja 2: Escenario del juego */
+.game-stage {
+  flex: 0 0 auto;
+  min-height: 400px;
   background: linear-gradient(135deg, #E9D5FF 0%, #F3E8FF 50%, #E9D5FF 100%);
   background-size: 200% 200%;
   animation: gradientShift 10s ease infinite;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stage {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text);
   font-size: 0.95rem;
   padding: 20px;
   box-sizing: border-box;
-  overflow: auto;
-  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.02);
   position: relative;
 }
 
@@ -191,9 +195,12 @@ body {
   text-align: center;
 }
 
+/* Franja 3: Canvas de programación */
 .editor {
   position: relative;
   flex: 1;
+  min-height: 300px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .maze-stage {
@@ -201,12 +208,16 @@ body {
   flex-direction: column;
   gap: 16px;
   position: relative;
+  width: 100%;
+  max-width: 600px;
+  align-items: center;
+  margin: 0 auto;
 }
 
 /* Botón Play/Restart grande en el stage */
 .stage-play-button {
   position: absolute;
-  left: 20px;
+  left: calc(50% - 350px);
   top: 50%;
   transform: translateY(-50%);
   width: 90px;
@@ -222,6 +233,12 @@ body {
   z-index: 100;
   transition: all 0.2s ease;
   color: white;
+}
+
+@media (max-width: 1200px) {
+  .stage-play-button {
+    left: 20px;
+  }
 }
 
 .stage-play-button:hover:not(:disabled) {
@@ -608,4 +625,35 @@ body {
   font-size: 0.95rem;
   text-align: center;
   margin: 40px 0;
+}
+
+/* Franja 4: Instrucciones disponibles */
+.instructions {
+  flex: 0 0 auto;
+  min-height: 150px;
+  max-height: 200px;
+  background: var(--color-bg-light);
+  border-top: 1px solid var(--color-border);
+  padding: 16px 20px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.instructions-title {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.instructions-content {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.instructions-placeholder {
+  margin: 0;
+  color: var(--color-text-light);
+  font-style: italic;
 }

@@ -15,6 +15,7 @@ const BASE_URL = import.meta.env.BASE_URL;
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div class="layout">
+    <!-- Franja 1: Header -->
     <div class="toolbar">
       <label for="game-select" class="toolbar-label">Juego</label>
       <select id="game-select" class="game-select"></select>
@@ -29,11 +30,22 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <span id="status" class="status"></span>
     </div>
 
-    <div class="main">
+    <!-- Franja 2: Escenario del juego -->
+    <div id="game-stage" class="game-stage">
       <div id="stage" class="stage"></div>
-      <div class="editor">
-        <div id="blocklyArea" class="blocklyArea"></div>
-        <div id="blocklyDiv" class="blocklyDiv"></div>
+    </div>
+
+    <!-- Franja 3: Canvas de programación -->
+    <div class="editor">
+      <div id="blocklyArea" class="blocklyArea"></div>
+      <div id="blocklyDiv" class="blocklyDiv"></div>
+    </div>
+
+    <!-- Franja 4: Instrucciones disponibles -->
+    <div id="instructions" class="instructions">
+      <h3 class="instructions-title">Instrucciones disponibles</h3>
+      <div class="instructions-content">
+        <p class="instructions-placeholder">Las instrucciones se mostrarán aquí.</p>
       </div>
     </div>
   </div>

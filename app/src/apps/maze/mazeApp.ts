@@ -584,24 +584,20 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
 
 export const MAZE_LIKE_TOOLBOX_XML = `
 <xml>
-  <category name="Control">
-    <block type="game_repeat">
-      <value name="TIMES">
-        <shadow type="math_whole_number"><field name="NUM">4</field></shadow>
-      </value>
-    </block>
-    <block type="game_wait">
-      <value name="MS">
-        <shadow type="math_positive_number"><field name="NUM">500</field></shadow>
-      </value>
-    </block>
-  </category>
-  <category name="Game">
-    <block type="game_move"></block>
-    <block type="game_back"></block>
-    <block type="game_turn_left"></block>
-    <block type="game_turn_right"></block>
-  </category>
+  <block type="game_move"></block>
+  <block type="game_back"></block>
+  <block type="game_turn_left"></block>
+  <block type="game_turn_right"></block>
+  <block type="game_repeat">
+    <value name="TIMES">
+      <shadow type="math_whole_number"><field name="NUM">4</field></shadow>
+    </value>
+  </block>
+  <block type="game_wait">
+    <value name="MS">
+      <shadow type="math_positive_number"><field name="NUM">500</field></shadow>
+    </value>
+  </block>
 </xml>
 `;
 
