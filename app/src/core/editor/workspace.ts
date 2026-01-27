@@ -1,6 +1,12 @@
 type BlocklyLike = {
   inject: (mount: HTMLElement, options: Record<string, unknown>) => unknown;
   Events?: { UI?: string };
+  Xml?: {
+    workspaceToDom: (workspace: unknown) => Element;
+    domToText: (xml: Element) => string;
+    textToDom: (text: string) => Element;
+    domToWorkspace: (xml: Element, workspace: unknown) => void;
+  };
 };
 
 export type WorkspaceOptions = {
@@ -17,6 +23,7 @@ type WorkspaceLike = {
   getTopBlocks: (ordered: boolean) => any[];
   addChangeListener: (cb: (event?: { type?: string }) => void) => void;
   dispose?: () => void;
+  clear?: () => void;
 };
 
 const ensureFixedStartBlock = (
@@ -60,67 +67,68 @@ export const createWorkspace = (
 ): unknown => {
   const BASE_URL = import.meta.env.BASE_URL;
   
-  // Interceptar setValue de FieldNumber para forzar re-render después de cada cambio
-  // Esto captura TODOS los cambios, sin importar cómo se actualicen los valores
-  const originalSetValue = (Blockly as any).FieldNumber?.prototype?.setValue;
-  if (originalSetValue && typeof originalSetValue === "function") {
-    (Blockly as any).FieldNumber.prototype.setValue = function(newValue: any) {
-      // Llamar al método original
-      const result = originalSetValue.call(this, newValue);
+  // Interceptar setValue de FieldNumber para hacer save/load automático
+  // Estrategia: cuando cambia un número, hacer save/load del workspace para forzar re-render completo
+  // Usamos debounce para evitar hacerlo demasiado frecuentemente
+  // Map para rastrear timeouts por workspace (permite múltiples workspaces)
+  const workspaceRefreshTimeouts = new Map<any, number>();
+  const REFRESH_DELAY = 150; // ms de delay antes de hacer refresh
+  
+  const refreshWorkspace = (ws: WorkspaceLike) => {
+    if (!Blockly.Xml) return;
+    
+    try {
+      // Guardar el estado actual del workspace
+      const xml = Blockly.Xml.workspaceToDom(ws);
+      const xmlText = Blockly.Xml.domToText(xml);
       
-      // Después de actualizar el valor, forzar re-render del bloque padre
-      const sourceBlock = this.sourceBlock_;
-      if (sourceBlock) {
-        // Usar requestAnimationFrame para asegurar timing correcto
-        requestAnimationFrame(() => {
-          try {
-            // Función para forzar re-render completo con ancestros
-            const forceCompleteRender = (block: any): void => {
-              if (!block || !block.rendered) return;
-              
-              // Invalidar métricas
-              if (block.renderingMetrics_ !== undefined) {
-                block.renderingMetrics_ = null;
-              }
-              
-              // Re-renderizar
-              if (typeof block.render === "function") {
-                block.render(true);
-              }
-              
-              // Re-renderizar ancestros
-              let parent = block.getParent?.();
-              while (parent && parent.rendered) {
-                if (parent.renderingMetrics_ !== undefined) {
-                  parent.renderingMetrics_ = null;
-                }
-                if (typeof parent.render === "function") {
-                  parent.render(true);
-                }
-                parent = parent.getParent?.();
-              }
-            };
-            
-            // Si es un shadow block, re-renderizar el padre también
-            if (sourceBlock.isShadow?.()) {
-              const parent = sourceBlock.getParent?.();
-              if (parent) {
-                forceCompleteRender(sourceBlock);
-                forceCompleteRender(parent);
-              } else {
-                forceCompleteRender(sourceBlock);
-              }
-            } else {
-              forceCompleteRender(sourceBlock);
+      // Limpiar y recargar para forzar re-render completo
+      ws.clear?.();
+      const xmlDom = Blockly.Xml.textToDom(xmlText);
+      Blockly.Xml.domToWorkspace(xmlDom, ws);
+      
+      // Limpiar el timeout del Map después de ejecutar
+      workspaceRefreshTimeouts.delete(ws);
+    } catch (error) {
+      // Ignorar errores silenciosamente
+      workspaceRefreshTimeouts.delete(ws);
+    }
+  };
+  
+  // Interceptar setValue solo una vez (a nivel global)
+  if (!(Blockly as any).__fieldNumberSetValueIntercepted) {
+    const originalSetValue = (Blockly as any).FieldNumber?.prototype?.setValue;
+    if (originalSetValue && typeof originalSetValue === "function") {
+      (Blockly as any).FieldNumber.prototype.setValue = function(newValue: any) {
+        // Llamar al método original
+        const result = originalSetValue.call(this, newValue);
+        
+        // Verificar si el bloque está en un workspace válido
+        const sourceBlock = this.sourceBlock_;
+        if (sourceBlock) {
+          const ws = sourceBlock.workspace;
+          if (ws && Blockly.Xml) {
+            // Cancelar timeout anterior para este workspace si existe
+            const existingTimeout = workspaceRefreshTimeouts.get(ws);
+            if (existingTimeout !== undefined) {
+              clearTimeout(existingTimeout);
             }
-          } catch (error) {
-            // Ignorar errores silenciosamente
+            
+            // Programar refresh con debounce
+            const timeoutId = window.setTimeout(() => {
+              refreshWorkspace(ws as WorkspaceLike);
+            }, REFRESH_DELAY);
+            
+            workspaceRefreshTimeouts.set(ws, timeoutId);
           }
-        });
-      }
+        }
+        
+        return result;
+      };
       
-      return result;
-    };
+      // Marcar como interceptado para evitar múltiples interceptaciones
+      (Blockly as any).__fieldNumberSetValueIntercepted = true;
+    }
   }
   
   const workspace = Blockly.inject(mountEl, {
