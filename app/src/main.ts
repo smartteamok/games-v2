@@ -9,7 +9,7 @@ import { loadProject } from "./core/storage/projectStore";
 import { apps, getDefaultApp, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
-import { toggleSkillsPanel, updateStagePlayButton } from "./apps/maze/mazeApp";
+import { toggleSkillsPanel, updateStagePlayButton, updateInstructions } from "./apps/maze/mazeApp";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -156,8 +156,9 @@ function switchGame(appId: string): void {
   gameSelect.value = currentApp.id;
   currentApp.render(stageEl, appState, buildContext());
   
-  // Reiniciar botón del stage a "play"
+  // Reiniciar botón del stage a "play" y actualizar instrucciones
   updateStagePlayButton("play");
+  updateInstructions();
 }
 
 gameSelect.addEventListener("change", () => {

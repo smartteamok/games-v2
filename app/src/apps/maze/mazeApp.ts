@@ -254,6 +254,32 @@ export const updateStagePlayButton = (state: "play" | "restart" | "disabled"): v
   }
 };
 
+// Función para actualizar las instrucciones disponibles
+export const updateInstructions = (): void => {
+  const instructionsContent = document.querySelector(".instructions-content");
+  if (!instructionsContent) return;
+
+  const instructions = [
+    { name: "Mover", description: "Avanza una casilla hacia adelante" },
+    { name: "Retroceder", description: "Retrocede una casilla" },
+    { name: "Girar izquierda", description: "Gira 90° hacia la izquierda" },
+    { name: "Girar derecha", description: "Gira 90° hacia la derecha" },
+    { name: "Repetir", description: "Repite un bloque varias veces" },
+    { name: "Esperar", description: "Espera un tiempo antes de continuar" }
+  ];
+
+  instructionsContent.innerHTML = instructions
+    .map(
+      (inst) => `
+    <div class="instruction-item">
+      <strong class="instruction-name">${inst.name}</strong>
+      <p class="instruction-desc">${inst.description}</p>
+    </div>
+  `
+    )
+    .join("");
+};
+
 const openSkillsPanel = (): void => {
   const panel = skillsPanel || (document.querySelector(".skills-panel") as HTMLElement);
   const overlay = skillsPanelOverlay || (document.querySelector(".skills-panel-overlay") as HTMLElement);
