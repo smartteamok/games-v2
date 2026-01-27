@@ -83,53 +83,96 @@ export const createWorkspace = (
 
   // Estrategia 1: Event Listener específico para cambios en campos numéricos de shadow blocks
   // Escucha solo cambios de tipo "field" y filtra por shadow blocks conectados a inputs numéricos
-  const refreshTimeouts = new WeakMap<any, ReturnType<typeof setTimeout>>();
-  const REFRESH_DEBOUNCE_MS = 200;
+  // Espera a que el usuario presione Enter antes de refrescar
+  const pendingRefreshFields = new WeakMap<any, Set<string>>(); // Track campos pendientes de refresh
+  const enterKeyListeners = new WeakMap<any, (e: KeyboardEvent) => void>(); // Track listeners de Enter por workspace
 
-  const refreshWorkspaceDebounced = (ws: any, BlocklyInstance: BlocklyLike) => {
+  const refreshWorkspace = (ws: any, BlocklyInstance: BlocklyLike) => {
     // Verificar que no hay interacciones activas
     if (ws?.isDragging?.()) {
       return;
     }
 
-    // Limpiar timeout anterior si existe
-    const existingTimeout = refreshTimeouts.get(ws);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
+    try {
+      console.log("🔄 Ejecutando refresh del workspace...");
+
+      // Guardar estado actual del workspace
+      const xml = BlocklyInstance.Xml?.workspaceToDom(ws);
+      if (!xml) return;
+
+      const xmlText = BlocklyInstance.Xml?.domToText(xml);
+      if (!xmlText) return;
+
+      // Limpiar workspace
+      ws.clear?.();
+
+      // Restaurar desde XML (esto fuerza un re-render completo)
+      const dom = BlocklyInstance.Xml?.textToDom(xmlText);
+      if (dom) {
+        BlocklyInstance.Xml?.domToWorkspace(dom, ws);
+        console.log("✅ Refresh completado");
+      }
+
+      // Limpiar campos pendientes
+      const pendingFields = pendingRefreshFields.get(ws);
+      if (pendingFields) {
+        pendingFields.clear();
+      }
+    } catch (error) {
+      console.error("Error en refreshWorkspace:", error);
+    }
+  };
+
+  // Configurar listener de Enter para detectar cuando el usuario presiona Enter en el editor
+  const setupEnterKeyListener = (ws: any, BlocklyInstance: BlocklyLike) => {
+    // Verificar si ya hay un listener configurado
+    if (enterKeyListeners.has(ws)) {
+      return;
     }
 
-    // Crear nuevo timeout para hacer refresh
-    const timeout = setTimeout(() => {
-      try {
-        // Verificar una última vez que no hay interacciones activas
-        if (ws?.isDragging?.()) {
-          return;
-        }
-
-        // Guardar estado actual del workspace
-        const xml = BlocklyInstance.Xml?.workspaceToDom(ws);
-        if (!xml) return;
-
-        const xmlText = BlocklyInstance.Xml?.domToText(xml);
-        if (!xmlText) return;
-
-        // Limpiar workspace
-        ws.clear?.();
-
-        // Restaurar desde XML (esto fuerza un re-render completo)
-        const dom = BlocklyInstance.Xml?.textToDom(xmlText);
-        if (dom) {
-          BlocklyInstance.Xml?.domToWorkspace(dom, ws);
-        }
-      } catch (error) {
-        console.error("Error en refreshWorkspace:", error);
-      } finally {
-        refreshTimeouts.delete(ws);
+    // Función que detecta Enter y hace refresh
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Solo procesar si es Enter (keyCode 13 o key === "Enter")
+      if (e.keyCode !== 13 && e.key !== "Enter") {
+        return;
       }
-    }, REFRESH_DEBOUNCE_MS);
 
-    refreshTimeouts.set(ws, timeout);
+      // Verificar que hay campos pendientes de refresh
+      const pendingFields = pendingRefreshFields.get(ws);
+      if (!pendingFields || pendingFields.size === 0) {
+        return;
+      }
+
+      // Verificar que el evento viene del editor de Blockly (WidgetDiv)
+      // Blockly usa WidgetDiv para mostrar editores de campos
+      const target = e.target as HTMLElement;
+      if (!target || !target.closest?.(".blocklyWidgetDiv")) {
+        return;
+      }
+
+      console.log("⌨️ Enter presionado, haciendo refresh...");
+
+      // Hacer refresh inmediato
+      refreshWorkspace(ws, BlocklyInstance);
+    };
+
+    // Agregar listener al document para capturar todos los eventos de teclado
+    document.addEventListener("keydown", handleKeyDown);
+    enterKeyListeners.set(ws, handleKeyDown);
+
+    // Limpiar listener cuando se destruye el workspace
+    const originalDispose = ws.dispose;
+    if (originalDispose) {
+      ws.dispose = function() {
+        document.removeEventListener("keydown", handleKeyDown);
+        enterKeyListeners.delete(ws);
+        originalDispose.call(this);
+      };
+    }
   };
+
+  // Configurar listener de Enter para este workspace
+  setupEnterKeyListener(workspace, Blockly);
 
   // Listener para detectar cambios en campos numéricos de shadow blocks
   workspace.addChangeListener((event?: { 
@@ -140,107 +183,55 @@ export const createWorkspace = (
     oldValue?: any;
     newValue?: any;
   }) => {
-    // DEBUG: Log todos los eventos para entender qué se está disparando
-    if (event) {
-      console.log("🔍 Evento recibido:", {
-        type: event.type,
-        element: event.element,
-        blockId: event.blockId,
-        name: event.name,
-        oldValue: event.oldValue,
-        newValue: event.newValue,
-        fullEvent: event
-      });
-    }
+    if (!event) return;
 
     // Solo procesar eventos CHANGE de tipo "field" (cambios en campos)
-    if (!event) {
-      console.log("❌ No hay evento");
+    if (event.type !== Blockly.Events?.CHANGE || event.element !== "field") {
       return;
     }
-
-    if (event.type !== Blockly.Events?.CHANGE) {
-      console.log("❌ No es evento CHANGE, tipo:", event.type, "esperado:", Blockly.Events?.CHANGE);
-      return;
-    }
-
-    if (event.element !== "field") {
-      console.log("❌ No es elemento 'field', elemento:", event.element);
-      return;
-    }
-
-    console.log("✅ Es evento CHANGE de tipo field");
 
     // Obtener el bloque donde ocurrió el cambio
     const block = workspace.getBlockById?.(event.blockId || "");
-    if (!block) {
-      console.log("❌ No se encontró el bloque con ID:", event.blockId);
-      return;
-    }
-
-    console.log("✅ Bloque encontrado:", block.type, "isShadow:", block.isShadow?.());
-
-    // Verificar que es un shadow block
-    if (!block.isShadow?.()) {
-      console.log("❌ No es shadow block");
-      return;
-    }
-
-    console.log("✅ Es shadow block");
-
-    // Verificar que el campo existe y tiene un nombre válido para campos numéricos
-    const field = block.getField?.(event.name || "");
-    if (!field) {
-      console.log("❌ No se encontró el campo:", event.name);
+    if (!block || !block.isShadow?.()) {
       return;
     }
 
     // Verificar que el nombre del campo es típico de campos numéricos
-    // Los campos numéricos en shadow blocks suelen llamarse "NUM", "N", "VALUE", etc.
     const numericFieldNames = ["NUM", "N", "VALUE", "MS", "SECS", "TIMES", "DURATION", "STEPS"];
     if (!event.name || !numericFieldNames.includes(event.name)) {
-      console.log("❌ El nombre del campo no es numérico:", event.name);
       return;
     }
-
-    console.log("✅ Campo numérico válido:", event.name);
 
     // Verificar que el valor realmente cambió
     if (event.oldValue === event.newValue) {
-      console.log("❌ El valor no cambió:", event.oldValue, "===", event.newValue);
       return;
     }
-
-    console.log("✅ Valor cambió:", event.oldValue, "->", event.newValue);
 
     // Verificar que el shadow block está conectado a un input de un bloque relevante
     const parent = block.getParent?.();
-    if (!parent) {
-      console.log("❌ No tiene parent");
-      return;
-    }
+    if (!parent) return;
 
-    console.log("✅ Parent encontrado:", parent.type);
-
-    // Tipos de bloques que tienen inputs numéricos que necesitan refresh
     const relevantTypes = ["game_repeat", "game_wait"];
     if (!relevantTypes.includes(parent.type)) {
-      console.log("❌ Parent no es relevante:", parent.type, "esperado:", relevantTypes);
       return;
     }
-
-    console.log("✅ Parent es relevante:", parent.type);
 
     // Verificar que no hay interacciones activas
     if (workspace.isDragging?.()) {
-      console.log("❌ Está haciendo drag");
       return;
     }
 
-    console.log("✅ Todas las verificaciones pasaron, haciendo refresh...");
+    // Marcar este campo como pendiente de refresh
+    // El refresh se ejecutará cuando el usuario presione Enter (detectado por el listener de teclado)
+    let pendingFields = pendingRefreshFields.get(workspace);
+    if (!pendingFields) {
+      pendingFields = new Set();
+      pendingRefreshFields.set(workspace, pendingFields);
+    }
+    const fieldKey = `${event.blockId}:${event.name}`;
+    pendingFields.add(fieldKey);
 
-    // Hacer refresh del workspace con debounce
-    refreshWorkspaceDebounced(workspace, Blockly);
+    console.log("📝 Campo marcado para refresh al presionar Enter:", fieldKey);
   });
 
   if (opts.fixedStartBlock) {
