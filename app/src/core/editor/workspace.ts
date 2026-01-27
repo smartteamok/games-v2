@@ -110,7 +110,6 @@ export const createWorkspace = (
       const dom = BlocklyInstance.Xml?.textToDom(xmlText);
       if (dom) {
         BlocklyInstance.Xml?.domToWorkspace(dom, ws);
-        console.log("✅ Refresh completado");
       }
 
       // Limpiar campos pendientes
@@ -119,7 +118,7 @@ export const createWorkspace = (
         pendingFields.clear();
       }
     } catch (error) {
-      console.error("Error en refreshWorkspace:", error);
+      // Silenciar errores de refresh
     }
   };
 
@@ -230,8 +229,6 @@ export const createWorkspace = (
     }
     const fieldKey = `${event.blockId}:${event.name}`;
     pendingFields.add(fieldKey);
-
-    console.log("📝 Campo marcado para refresh al presionar Enter:", fieldKey);
   });
 
   if (opts.fixedStartBlock) {

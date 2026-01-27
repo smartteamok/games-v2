@@ -1,11 +1,11 @@
 // src/main.ts
 import "./style.css";
 import { createWorkspace, destroyWorkspace } from "./core/editor/workspace";
-import { loadXmlTextIntoWorkspace, workspaceToXmlText } from "./core/editor/serialization";
+import { loadXmlTextIntoWorkspace } from "./core/editor/serialization";
 import { compileWorkspaceToAst } from "./core/compiler/compile";
 import { validateProgram } from "./core/compiler/validate";
 import { runProgram, type RuntimeController } from "./core/runtime/runtime";
-import { loadProject, saveProject } from "./core/storage/projectStore";
+import { loadProject } from "./core/storage/projectStore";
 import { apps, getDefaultApp, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
@@ -21,18 +21,6 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <button id="btnRun" class="toolbar-btn toolbar-btn-run" title="Ejecutar programa">
         <img src="${BASE_URL}icons/play.svg" alt="Run" class="btn-icon" />
         <span>Run</span>
-      </button>
-      <button id="btnStop" class="toolbar-btn toolbar-btn-stop" title="Detener ejecución" disabled>
-        <img src="${BASE_URL}icons/stop.svg" alt="Stop" class="btn-icon" />
-        <span>Stop</span>
-      </button>
-      <button id="btnSave" class="toolbar-btn toolbar-btn-save" title="Guardar proyecto">
-        <img src="${BASE_URL}icons/save.svg" alt="Save" class="btn-icon" />
-        <span>Save</span>
-      </button>
-      <button id="btnLoad" class="toolbar-btn toolbar-btn-load" title="Cargar proyecto">
-        <img src="${BASE_URL}icons/load.svg" alt="Load" class="btn-icon" />
-        <span>Load</span>
       </button>
       <span id="status" class="status"></span>
     </div>
@@ -96,11 +84,9 @@ let appState: unknown = currentApp.createInitialState();
 let runtimeController: RuntimeController | null = null;
 
 const btnRun = document.getElementById("btnRun") as HTMLButtonElement;
-const btnStop = document.getElementById("btnStop") as HTMLButtonElement;
 
 const updateButtonStates = (isRunning: boolean) => {
   btnRun.disabled = isRunning;
-  btnStop.disabled = !isRunning;
 };
 
 gameSelect.value = currentApp.id;
@@ -151,38 +137,6 @@ function switchGame(appId: string): void {
 
 gameSelect.addEventListener("change", () => {
   switchGame(gameSelect.value);
-});
-
-document.getElementById("btnSave")!.addEventListener("click", () => {
-  const workspaceXml = workspaceToXmlText(Blockly, workspace);
-  const appStateRaw = currentApp.serializeState
-    ? currentApp.serializeState(appState)
-    : appState;
-  saveProject({
-    schemaVersion: 1,
-    appId: currentApp.id,
-    workspaceXml,
-    appState: appStateRaw
-  });
-  setStatus("Guardado ✅");
-});
-
-document.getElementById("btnLoad")!.addEventListener("click", () => {
-  const project = loadProject(currentApp.id);
-  if (!project) {
-    setStatus("No hay nada guardado para este juego");
-    return;
-  }
-  if (project.appId !== currentApp.id) {
-    setStatus(`Proyecto de otro juego: ${project.appId}`);
-    return;
-  }
-  loadXmlTextIntoWorkspace(Blockly, workspace as { clear?: () => void }, project.workspaceXml);
-  appState = currentApp.deserializeState
-    ? currentApp.deserializeState(project.appState)
-    : (project.appState as unknown);
-  currentApp.render(stageEl, appState, buildContext());
-  setStatus("Cargado ✅");
 });
 
 document.getElementById("btnRun")!.addEventListener("click", () => {
@@ -302,18 +256,6 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
     const message = error instanceof Error ? error.message : String(error);
     setStatus(`Error: ${message}`);
   }
-});
-
-btnStop.addEventListener("click", () => {
-  runtimeController?.stop();
-  clearBlockHighlight(workspace);
-  updateButtonStates(false);
-  if (typeof appState === "object" && appState) {
-    (appState as { status?: string; message?: string }).status = "idle";
-    (appState as { message?: string }).message = "Detenido";
-  }
-  currentApp.render(stageEl, appState, buildContext());
-  setStatus("Detenido.");
 });
 
 // Efectos visuales
