@@ -58,11 +58,12 @@ export const createWorkspace = (
   toolboxXml: string,
   opts: WorkspaceOptions = {}
 ): unknown => {
+  const BASE_URL = import.meta.env.BASE_URL;
   const workspace = Blockly.inject(mountEl, {
     toolbox: toolboxXml,
     horizontalLayout: opts.horizontalLayout ?? true,
     toolboxPosition: opts.toolboxPosition ?? "end",
-    media: opts.mediaPath ?? "/vendor/scratch-blocks/media/",
+    media: opts.mediaPath ?? `${BASE_URL}vendor/scratch-blocks/media/`,
     trashcan: opts.trashcan ?? true,
     scrollbars: opts.scrollbars ?? true
   }) as WorkspaceLike;

@@ -40,10 +40,12 @@ const GAME_ICON_SIZE = 42;
 const CELL = 48;
 const PADDING = 12;
 
-const ICON_MOVE = "/game-icons/move-right.svg";
-const ICON_BACK = "/game-icons/move-left.svg";
-const ICON_TURN_LEFT = "/game-icons/turn-left.svg";
-const ICON_TURN_RIGHT = "/game-icons/turn-right.svg";
+const BASE_URL = import.meta.env.BASE_URL;
+
+const ICON_MOVE = `${BASE_URL}game-icons/move-right.svg`;
+const ICON_BACK = `${BASE_URL}game-icons/move-left.svg`;
+const ICON_TURN_LEFT = `${BASE_URL}game-icons/turn-left.svg`;
+const ICON_TURN_RIGHT = `${BASE_URL}game-icons/turn-right.svg`;
 
 const DIR_ORDER: Direction[] = ["N", "E", "S", "W"];
 const DIR_DELTAS: Record<Direction, { x: number; y: number }> = {
@@ -391,7 +393,7 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
     }
   };
 
-  const pathToMedia = "/vendor/scratch-blocks/media/";
+  const pathToMedia = `${BASE_URL}vendor/scratch-blocks/media/`;
 
   Blockly.Blocks["game_repeat"] = {
     init: function () {

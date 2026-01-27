@@ -10,6 +10,8 @@ import { apps, getDefaultApp, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div class="layout">
     <div class="toolbar">
@@ -17,19 +19,19 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <select id="game-select" class="game-select"></select>
       <div class="toolbar-sep"></div>
       <button id="btnRun" class="toolbar-btn toolbar-btn-run" title="Ejecutar programa">
-        <img src="/icons/play.svg" alt="Run" class="btn-icon" />
+        <img src="${BASE_URL}icons/play.svg" alt="Run" class="btn-icon" />
         <span>Run</span>
       </button>
       <button id="btnStop" class="toolbar-btn toolbar-btn-stop" title="Detener ejecución" disabled>
-        <img src="/icons/stop.svg" alt="Stop" class="btn-icon" />
+        <img src="${BASE_URL}icons/stop.svg" alt="Stop" class="btn-icon" />
         <span>Stop</span>
       </button>
       <button id="btnSave" class="toolbar-btn toolbar-btn-save" title="Guardar proyecto">
-        <img src="/icons/save.svg" alt="Save" class="btn-icon" />
+        <img src="${BASE_URL}icons/save.svg" alt="Save" class="btn-icon" />
         <span>Save</span>
       </button>
       <button id="btnLoad" class="toolbar-btn toolbar-btn-load" title="Cargar proyecto">
-        <img src="/icons/load.svg" alt="Load" class="btn-icon" />
+        <img src="${BASE_URL}icons/load.svg" alt="Load" class="btn-icon" />
         <span>Load</span>
       </button>
       <span id="status" class="status"></span>
@@ -66,7 +68,7 @@ const setStatus = (text: string) => {
 const WORKSPACE_OPTS = {
   horizontalLayout: true,
   toolboxPosition: "end" as const,
-  mediaPath: "/vendor/scratch-blocks/media/",
+  mediaPath: `${BASE_URL}vendor/scratch-blocks/media/`,
   trashcan: true,
   scrollbars: true,
   fixedStartBlock: { type: "event_whenflagclicked", x: 40, y: 30 }
