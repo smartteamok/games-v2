@@ -27,6 +27,7 @@ type MazeUI = {
   statusEl: HTMLDivElement;
   skillsPanel?: HTMLElement;
   skillsPanelOverlay?: HTMLElement;
+  stagePlayButton?: HTMLButtonElement;
 };
 
 // Estado de animación temporal
@@ -133,10 +134,14 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const statusEl = document.createElement("div");
   statusEl.className = "maze-status";
 
+  // Botón Play/Restart grande
+  const stagePlayButton = createStagePlayButton();
+
   container.appendChild(progressBar);
   container.appendChild(canvas);
   container.appendChild(statusEl);
   rootEl.appendChild(container);
+  rootEl.appendChild(stagePlayButton);
 
   // Crear panel lateral de skills solo una vez
   if (!skillsPanel) {
@@ -149,7 +154,7 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   // Guardar contexto en rootEl para acceso desde updateProgressBar
   (rootEl as any).__renderContext = ctx;
 
-  const mazeUI: MazeUI = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay };
+  const mazeUI: MazeUI = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay, stagePlayButton };
   ui = mazeUI;
   updateProgressBar(ctx.getState?.() as MazeState | undefined);
   return mazeUI;
@@ -190,6 +195,51 @@ const createSkillsPanelOverlay = (): HTMLElement => {
   overlay.className = "skills-panel-overlay";
   overlay.addEventListener("click", () => closeSkillsPanel());
   return overlay;
+};
+
+const createStagePlayButton = (): HTMLButtonElement => {
+  const button = document.createElement("button");
+  button.className = "stage-play-button";
+  button.setAttribute("aria-label", "Ejecutar programa");
+  button.setAttribute("data-state", "play");
+  updateStagePlayButtonState(button, "play");
+  return button;
+};
+
+const updateStagePlayButtonState = (button: HTMLButtonElement, state: "play" | "restart" | "disabled"): void => {
+  button.setAttribute("data-state", state);
+  button.disabled = state === "disabled";
+  
+  if (state === "play") {
+    button.innerHTML = `
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+      </svg>
+    `;
+    button.setAttribute("aria-label", "Ejecutar programa");
+  } else if (state === "restart") {
+    button.innerHTML = `
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/>
+      </svg>
+    `;
+    button.setAttribute("aria-label", "Reiniciar y ejecutar");
+  } else {
+    button.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+      </svg>
+    `;
+    button.setAttribute("aria-label", "Ejecutando...");
+  }
+};
+
+// Exportar función para actualizar el estado del botón desde main.ts
+export const updateStagePlayButton = (state: "play" | "restart" | "disabled"): void => {
+  const button = document.querySelector(".stage-play-button") as HTMLButtonElement;
+  if (button) {
+    updateStagePlayButtonState(button, state);
+  }
 };
 
 const openSkillsPanel = (): void => {

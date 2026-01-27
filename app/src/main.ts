@@ -9,7 +9,7 @@ import { loadProject } from "./core/storage/projectStore";
 import { apps, getDefaultApp, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
-import { toggleSkillsPanel } from "./apps/maze/mazeApp";
+import { toggleSkillsPanel, updateStagePlayButton } from "./apps/maze/mazeApp";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -91,6 +91,7 @@ const btnRun = document.getElementById("btnRun") as HTMLButtonElement;
 
 const updateButtonStates = (isRunning: boolean) => {
   btnRun.disabled = isRunning;
+  updateStagePlayButton(isRunning ? "disabled" : "play");
 };
 
 gameSelect.value = currentApp.id;
@@ -108,6 +109,11 @@ const buildContext = (): AppRenderContext<unknown> => ({
 });
 
 currentApp.render(stageEl, appState, buildContext());
+
+// Inicializar botón del stage
+setTimeout(() => {
+  updateStagePlayButton("play");
+}, 100);
 
 function switchGame(appId: string): void {
   const next = getAppById(appId);
@@ -137,6 +143,9 @@ function switchGame(appId: string): void {
 
   gameSelect.value = currentApp.id;
   currentApp.render(stageEl, appState, buildContext());
+  
+  // Reiniciar botón del stage a "play"
+  updateStagePlayButton("play");
 }
 
 gameSelect.addEventListener("change", () => {
@@ -145,6 +154,30 @@ gameSelect.addEventListener("change", () => {
 
 document.getElementById("btnSkills")!.addEventListener("click", () => {
   toggleSkillsPanel();
+});
+
+// Event listener para el botón grande del stage
+document.addEventListener("click", (e) => {
+  const target = e.target as HTMLElement;
+  const stageButton = target.closest(".stage-play-button") as HTMLButtonElement;
+  if (stageButton && !stageButton.disabled) {
+    const state = stageButton.getAttribute("data-state");
+    if (state === "restart") {
+      // Reiniciar a posición inicial
+      runtimeController?.stop();
+      appState = currentApp.adapter.reset(appState);
+      if (typeof appState === "object" && appState) {
+        (appState as { status?: string; message?: string }).status = "idle";
+        (appState as { message?: string }).message = undefined;
+      }
+      currentApp.render(stageEl, appState, buildContext());
+      updateStagePlayButton("play");
+      setStatus("Listo para ejecutar");
+    } else {
+      // Ejecutar programa (mismo comportamiento que btnRun)
+      document.getElementById("btnRun")?.click();
+    }
+  }
 });
 
 document.getElementById("btnRun")!.addEventListener("click", () => {
@@ -194,6 +227,13 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
           updateButtonStates(false);
           currentApp.render(stageEl, appState, buildContext());
           setStatus("Finalizado ✅");
+          // Cambiar a restart si el juego no terminó (no ganó, no perdió)
+          if (typeof appState === "object" && appState) {
+            const statusValue = (appState as { status?: string }).status;
+            if (statusValue !== "win" && statusValue !== "error") {
+              updateStagePlayButton("restart");
+            }
+          }
         },
         onError: (error) => {
           clearBlockHighlight(workspace);
@@ -206,6 +246,8 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
               triggerWinEffect(stageEl);
               currentApp.render(stageEl, appState, buildContext());
               setStatus(stateMessage ?? "Ganaste ✅");
+              // No cambiar a restart si ganó
+              updateStagePlayButton("play");
 
               // Avanzar automáticamente al siguiente nivel después de 2 segundos
               if (typeof appState === "object" && appState) {
@@ -251,6 +293,8 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
               triggerErrorEffect(stageEl);
               currentApp.render(stageEl, appState, buildContext());
               setStatus(stateMessage ?? `Error: ${message}`);
+              // No cambiar a restart si hubo error
+              updateStagePlayButton("play");
               return;
             }
           }
