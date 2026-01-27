@@ -59,8 +59,8 @@ const DIR_DELTAS: Record<Direction, { x: number; y: number }> = {
 
 let ui: MazeUI | null = null;
 let animationState: AnimationState = null;
-let skillsPanel: HTMLElement | null = null;
-let skillsPanelOverlay: HTMLElement | null = null;
+let skillsPanel: HTMLElement | undefined = undefined;
+let skillsPanelOverlay: HTMLElement | undefined = undefined;
 
 const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
@@ -141,7 +141,7 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   // Crear panel lateral de skills solo una vez
   if (!skillsPanel) {
     skillsPanel = createSkillsPanel();
-    skillsPanelOverlay = createSkillsPanelOverlay(skillsPanel);
+    skillsPanelOverlay = createSkillsPanelOverlay();
     document.body.appendChild(skillsPanelOverlay);
     document.body.appendChild(skillsPanel);
   }
@@ -149,9 +149,10 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   // Guardar contexto en rootEl para acceso desde updateProgressBar
   (rootEl as any).__renderContext = ctx;
 
-  ui = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay };
+  const mazeUI: MazeUI = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay };
+  ui = mazeUI;
   updateProgressBar(ctx.getState?.() as MazeState | undefined);
-  return ui;
+  return mazeUI;
 };
 
 const createSkillsPanel = (): HTMLElement => {
@@ -184,7 +185,7 @@ const createSkillsPanel = (): HTMLElement => {
   return panel;
 };
 
-const createSkillsPanelOverlay = (panel: HTMLElement): HTMLElement => {
+const createSkillsPanelOverlay = (): HTMLElement => {
   const overlay = document.createElement("div");
   overlay.className = "skills-panel-overlay";
   overlay.addEventListener("click", () => closeSkillsPanel());
