@@ -9,7 +9,7 @@ import { loadProject } from "./core/storage/projectStore";
 import { apps, getDefaultApp, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
-import { toggleSkillsPanel, updateStagePlayButton, updateInstructions } from "./apps/maze/mazeApp";
+import { toggleSkillsPanel, updateStagePlayButton, updateBlockLimitCounter } from "./apps/maze/mazeApp";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -110,22 +110,46 @@ gameSelect.value = currentApp.id;
 setStatus("Editor listo ✅");
 updateButtonStates(false);
 
+// Función para obtener levelId del estado actual
+const getLevelIdFromState = (state: unknown): number | undefined => {
+  if (typeof state === "object" && state !== null) {
+    const stateWithLevel = state as { levelId?: number };
+    return stateWithLevel.levelId;
+  }
+  return undefined;
+};
+
+// Función para actualizar el contador de bloques
+const refreshBlockLimit = (): void => {
+  const levelId = getLevelIdFromState(appState);
+  if (levelId !== undefined) {
+    updateBlockLimitCounter(workspace, levelId);
+  }
+};
+
 const buildContext = (): AppRenderContext<unknown> => ({
   getWorkspace: () => workspace,
   setStatus,
   updateState: (nextState) => {
     appState = nextState;
     currentApp.render(stageEl, appState, buildContext());
+    refreshBlockLimit();
   },
   getState: () => appState
 });
 
 currentApp.render(stageEl, appState, buildContext());
 
-// Inicializar botón del stage
+// Inicializar botón del stage y contador de bloques
 setTimeout(() => {
   updateStagePlayButton("play");
+  refreshBlockLimit();
 }, 100);
+
+// Escuchar cambios en el workspace para actualizar el contador en tiempo real
+window.addEventListener("blockly-workspace-changed", () => {
+  refreshBlockLimit();
+});
 
 function switchGame(appId: string): void {
   const next = getAppById(appId);
@@ -156,9 +180,9 @@ function switchGame(appId: string): void {
   gameSelect.value = currentApp.id;
   currentApp.render(stageEl, appState, buildContext());
   
-  // Reiniciar botón del stage a "play" y actualizar instrucciones
+  // Reiniciar botón del stage a "play" y actualizar contador de bloques
   updateStagePlayButton("play");
-  updateInstructions();
+  refreshBlockLimit();
 }
 
 gameSelect.addEventListener("change", () => {

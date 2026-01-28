@@ -254,30 +254,134 @@ export const updateStagePlayButton = (state: "play" | "restart" | "disabled"): v
   }
 };
 
-// Función para actualizar las instrucciones disponibles
+// Función para contar bloques en el workspace (excluyendo el bloque inicial)
+const countBlocks = (workspace: any): number => {
+  if (!workspace || !workspace.getTopBlocks) return 0;
+  
+  const allBlocks = workspace.getAllBlocks();
+  let count = 0;
+  
+  for (const block of allBlocks) {
+    // Excluir el bloque inicial "event_whenflagclicked"
+    if (block.type === "event_whenflagclicked") {
+      continue;
+    }
+    // Contar todos los demás bloques, incluyendo shadow blocks
+    count += 1;
+  }
+  
+  return count;
+};
+
+// Función para actualizar el contador de instrucciones disponibles
+export const updateBlockLimitCounter = (workspace: unknown, levelId: number): void => {
+  const level = getLevel(levelId);
+  const blockLimit = level.blockLimit;
+  const instructionsEl = document.querySelector(".instructions");
+  
+  if (!instructionsEl) return;
+  
+  // Si no hay límite, mostrar lista de instrucciones
+  if (blockLimit === undefined) {
+    const instructionsContent = instructionsEl.querySelector(".instructions-content");
+    if (instructionsContent) {
+      const instructions = [
+        { name: "Mover", description: "Avanza una casilla hacia adelante" },
+        { name: "Retroceder", description: "Retrocede una casilla" },
+        { name: "Girar izquierda", description: "Gira 90° hacia la izquierda" },
+        { name: "Girar derecha", description: "Gira 90° hacia la derecha" },
+        { name: "Repetir", description: "Repite un bloque varias veces" },
+        { name: "Esperar", description: "Espera un tiempo antes de continuar" }
+      ];
+      
+      instructionsContent.innerHTML = instructions
+        .map(
+          (inst) => `
+        <div class="instruction-item">
+          <strong class="instruction-name">${inst.name}</strong>
+          <p class="instruction-desc">${inst.description}</p>
+        </div>
+      `
+        )
+        .join("");
+    }
+    return;
+  }
+  
+  // Si hay límite, mostrar contador grande
+  const currentCount = countBlocks(workspace);
+  const remaining = Math.max(0, blockLimit - currentCount);
+  
+  const instructionsContent = instructionsEl.querySelector(".instructions-content");
+  if (instructionsContent) {
+    instructionsContent.innerHTML = `
+      <div class="block-limit-counter">
+        <div class="block-limit-number">${remaining}</div>
+        <div class="block-limit-label">${remaining === 1 ? "instrucción disponible" : "instrucciones disponibles"}</div>
+      </div>
+    `;
+  }
+  
+  // Deshabilitar/habilitar bloques del toolbox según el límite
+  updateToolboxBlocks(workspace, remaining > 0);
+};
+
+// Función para deshabilitar/habilitar bloques del toolbox
+const updateToolboxBlocks = (workspace: any, enabled: boolean): void => {
+  if (!workspace) return;
+  
+  // Obtener el toolbox del workspace
+  const toolbox = workspace.getToolbox?.();
+  if (!toolbox) return;
+  
+  // Obtener todos los items del toolbox
+  const toolboxItems = toolbox.getToolboxItems?.();
+  if (!toolboxItems) return;
+  
+  // Deshabilitar/habilitar cada item del toolbox
+  for (const item of toolboxItems) {
+    if (!item) continue;
+    
+    // Intentar usar el método setDisabled si existe
+    if (typeof item.setDisabled === "function") {
+      item.setDisabled(!enabled);
+    }
+    
+    // También deshabilitar el elemento DOM directamente
+    const element = item.getDiv?.();
+    if (element) {
+      if (enabled) {
+        element.classList.remove("blocklyDisabled");
+        element.style.opacity = "1";
+        element.style.pointerEvents = "auto";
+        element.style.cursor = "pointer";
+      } else {
+        element.classList.add("blocklyDisabled");
+        element.style.opacity = "0.4";
+        element.style.pointerEvents = "none";
+        element.style.cursor = "not-allowed";
+      }
+    }
+  }
+  
+  // También deshabilitar el flyout si existe
+  const flyout = toolbox.getFlyout?.();
+  if (flyout) {
+    const flyoutElement = flyout.getWorkspace?.()?.getParentSvg?.()?.parentElement;
+    if (flyoutElement) {
+      if (enabled) {
+        flyoutElement.style.pointerEvents = "auto";
+      } else {
+        flyoutElement.style.pointerEvents = "none";
+      }
+    }
+  }
+};
+
+// Función para actualizar las instrucciones disponibles (mantener compatibilidad)
 export const updateInstructions = (): void => {
-  const instructionsContent = document.querySelector(".instructions-content");
-  if (!instructionsContent) return;
-
-  const instructions = [
-    { name: "Mover", description: "Avanza una casilla hacia adelante" },
-    { name: "Retroceder", description: "Retrocede una casilla" },
-    { name: "Girar izquierda", description: "Gira 90° hacia la izquierda" },
-    { name: "Girar derecha", description: "Gira 90° hacia la derecha" },
-    { name: "Repetir", description: "Repite un bloque varias veces" },
-    { name: "Esperar", description: "Espera un tiempo antes de continuar" }
-  ];
-
-  instructionsContent.innerHTML = instructions
-    .map(
-      (inst) => `
-    <div class="instruction-item">
-      <strong class="instruction-name">${inst.name}</strong>
-      <p class="instruction-desc">${inst.description}</p>
-    </div>
-  `
-    )
-    .join("");
+  // Esta función ahora se maneja con updateBlockLimitCounter
+  // Se mantiene para compatibilidad pero no hace nada
 };
 
 const openSkillsPanel = (): void => {
@@ -777,7 +881,7 @@ const checkConstraints = (workspace: unknown, state: MazeState): ConstraintResul
   return { ok: true };
 };
 
-const levelInfos: LevelInfo[] = levels.map((l) => ({ id: l.id, title: l.title }));
+const levelInfos: LevelInfo[] = levels.map((l) => ({ id: l.id, title: l.title, blockLimit: l.blockLimit }));
 
 export const mazeApp: AppDefinition<MazeState> = {
   id: "maze",

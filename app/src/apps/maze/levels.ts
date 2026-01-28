@@ -9,6 +9,7 @@ export type MazeLevel = {
   start: { x: number; y: number; dir: Direction };
   goal: { x: number; y: number };
   constraints?: { maxBlocks?: number; mustUseRepeat?: boolean };
+  blockLimit?: number;
 };
 
 export const levels: MazeLevel[] = [

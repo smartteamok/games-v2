@@ -693,3 +693,29 @@ body {
   color: var(--color-text-light);
   font-style: italic;
 }
+
+/* Contador de límite de bloques */
+.block-limit-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.block-limit-number {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.block-limit-label {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

@@ -297,6 +297,19 @@ export const createWorkspace = (
     workspace.addChangeListener(ensure);
   }
 
+  // Configurar listeners para actualizar límite de bloques en tiempo real
+  if (workspace && typeof workspace.addChangeListener === "function") {
+    const blockLimitUpdateHandler = (event: any) => {
+      // Solo actualizar en eventos de creación/eliminación de bloques
+      if (event && (event.type === "create" || event.type === "delete" || event.type === "move")) {
+        // Disparar evento personalizado para que main.ts actualice el contador
+        window.dispatchEvent(new CustomEvent("blockly-workspace-changed"));
+      }
+    };
+    
+    workspace.addChangeListener(blockLimitUpdateHandler);
+  }
+
   return workspace;
 };
 

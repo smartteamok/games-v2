@@ -13,7 +13,7 @@ export type AppRenderContext<AppState> = {
 export type ConstraintResult = { ok: true } | { ok: false; message: string };
 
 /** Level metadata for games that have multiple levels (e.g. maze). */
-export type LevelInfo = { id: number; title: string };
+export type LevelInfo = { id: number; title: string; blockLimit?: number };
 
 export type AppDefinition<AppState> = {
   id: string;
