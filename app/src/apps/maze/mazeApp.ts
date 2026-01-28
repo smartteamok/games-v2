@@ -63,6 +63,38 @@ let animationState: AnimationState = null;
 let skillsPanel: HTMLElement | undefined = undefined;
 let skillsPanelOverlay: HTMLElement | undefined = undefined;
 
+// Sprite del personaje: se intenta cargar player-sprite-walking.png o player-sprite.png
+let playerSprite: HTMLImageElement | null = null;
+let playerSpriteFrames = 4; // 4 = solo direcciones; 8 = 2 frames por dirección
+let walkFrame = 0;
+
+const loadPlayerSprite = (): HTMLImageElement | null => {
+  if (playerSprite) return playerSprite;
+  playerSprite = new Image();
+  const basicSrc = `${BASE_URL}game-sprites/player-sprite.png`;
+  const walkingSrc = `${BASE_URL}game-sprites/player-sprite-walking.png`;
+
+  const detectFrames = () => {
+    if (!playerSprite) return;
+    const w = playerSprite.naturalWidth;
+    const h = playerSprite.naturalHeight;
+    if (w < 1 || h < 1) return;
+    const f8 = w / 8;
+    if (f8 > 0 && Math.abs(f8 - h) <= 4) playerSpriteFrames = 8;
+    else playerSpriteFrames = 4;
+  };
+
+  playerSprite.onload = detectFrames;
+  playerSprite.onerror = () => {
+    if (!playerSprite) return;
+    playerSprite.onerror = null;
+    playerSprite.src = walkingSrc;
+  };
+  playerSprite.src = basicSrc;
+  if (playerSprite.complete && playerSprite.naturalWidth > 0) detectFrames();
+  return playerSprite;
+};
+
 const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
 
@@ -162,6 +194,8 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const mazeUI: MazeUI = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay, stagePlayButton };
   ui = mazeUI;
   updateProgressBar(ctx.getState?.() as MazeState | undefined);
+  
+  loadPlayerSprite();
   
   // Actualizar status en su nuevo contenedor
   if (statusEl) {
@@ -537,8 +571,7 @@ const drawMaze = (state: MazeState): void => {
   ctx.arc(goalX - goalRadius * 0.3, goalY - goalRadius * 0.3, goalRadius * 0.4, 0, Math.PI * 2);
   ctx.fill();
 
-  // Jugador con outline blanco
-  // Usar estado de animación si existe, sino usar estado real
+  // Usar estado de animación si existe, sino estado real
   const playerX = animationState
     ? PADDING + animationState.playerX * CELL + CELL / 2
     : PADDING + state.player.x * CELL + CELL / 2;
@@ -548,52 +581,63 @@ const drawMaze = (state: MazeState): void => {
   const playerDir = animationState ? animationState.playerDir : state.player.dir;
   const size = CELL * 0.28;
 
-  // Outline blanco
-  ctx.strokeStyle = "#FFFFFF";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  if (playerDir === "N") {
-    ctx.moveTo(playerX, playerY - size);
-    ctx.lineTo(playerX - size, playerY + size);
-    ctx.lineTo(playerX + size, playerY + size);
-  } else if (playerDir === "S") {
-    ctx.moveTo(playerX, playerY + size);
-    ctx.lineTo(playerX - size, playerY - size);
-    ctx.lineTo(playerX + size, playerY - size);
-  } else if (playerDir === "E") {
-    ctx.moveTo(playerX + size, playerY);
-    ctx.lineTo(playerX - size, playerY - size);
-    ctx.lineTo(playerX - size, playerY + size);
-  } else {
-    ctx.moveTo(playerX - size, playerY);
-    ctx.lineTo(playerX + size, playerY - size);
-    ctx.lineTo(playerX + size, playerY + size);
-  }
-  ctx.closePath();
-  ctx.stroke();
+  // Avanzar frame de caminar solo durante movimiento
+  if (animationState) walkFrame += 1;
 
-  // Jugador principal
-  ctx.fillStyle = GAME_COLOR;
-  ctx.beginPath();
-  if (playerDir === "N") {
-    ctx.moveTo(playerX, playerY - size);
-    ctx.lineTo(playerX - size, playerY + size);
-    ctx.lineTo(playerX + size, playerY + size);
-  } else if (playerDir === "S") {
-    ctx.moveTo(playerX, playerY + size);
-    ctx.lineTo(playerX - size, playerY - size);
-    ctx.lineTo(playerX + size, playerY - size);
-  } else if (playerDir === "E") {
-    ctx.moveTo(playerX + size, playerY);
-    ctx.lineTo(playerX - size, playerY - size);
-    ctx.lineTo(playerX - size, playerY + size);
+  const sprite = loadPlayerSprite();
+  const useSprite = sprite && sprite.complete && sprite.naturalWidth > 0;
+
+  if (useSprite) {
+    const w = sprite!.naturalWidth;
+    const h = sprite!.naturalHeight;
+    const n = playerSpriteFrames;
+    const fw = w / n;
+    const fh = h;
+    const dirIndex = playerDir === "N" ? 0 : playerDir === "E" ? 1 : playerDir === "S" ? 2 : 3;
+    const framesPerDir = n / 4;
+    const animFrame = framesPerDir > 1 ? (walkFrame % Math.floor(framesPerDir)) : 0;
+    const frameIndex = Math.min(dirIndex * Math.floor(framesPerDir) + animFrame, n - 1);
+    const sx = frameIndex * fw;
+    const drawW = CELL * 0.9;
+    const drawH = (fh / fw) * drawW;
+    ctx.drawImage(
+      sprite!,
+      sx,
+      0,
+      fw,
+      fh,
+      playerX - drawW / 2,
+      playerY - drawH / 2,
+      drawW,
+      drawH
+    );
   } else {
-    ctx.moveTo(playerX - size, playerY);
-    ctx.lineTo(playerX + size, playerY - size);
-    ctx.lineTo(playerX + size, playerY + size);
+    // Fallback: triángulo con outline blanco
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    if (playerDir === "N") {
+      ctx.moveTo(playerX, playerY - size);
+      ctx.lineTo(playerX - size, playerY + size);
+      ctx.lineTo(playerX + size, playerY + size);
+    } else if (playerDir === "S") {
+      ctx.moveTo(playerX, playerY + size);
+      ctx.lineTo(playerX - size, playerY - size);
+      ctx.lineTo(playerX + size, playerY - size);
+    } else if (playerDir === "E") {
+      ctx.moveTo(playerX + size, playerY);
+      ctx.lineTo(playerX - size, playerY - size);
+      ctx.lineTo(playerX - size, playerY + size);
+    } else {
+      ctx.moveTo(playerX - size, playerY);
+      ctx.lineTo(playerX + size, playerY - size);
+      ctx.lineTo(playerX + size, playerY + size);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = GAME_COLOR;
+    ctx.fill();
   }
-  ctx.closePath();
-  ctx.fill();
 
   ui.statusEl.textContent = updateStatusText(state);
 };
