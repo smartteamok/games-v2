@@ -20,14 +20,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <label for="game-select" class="toolbar-label">Juego</label>
       <select id="game-select" class="game-select"></select>
       <div class="toolbar-sep"></div>
-      <button id="btnRun" class="toolbar-btn toolbar-btn-run" title="Ejecutar programa">
-        <img src="${BASE_URL}icons/play.svg" alt="Run" class="btn-icon" />
-        <span>Run</span>
-      </button>
+      <div id="level-bar" class="toolbar-level-bar"></div>
+      <div class="toolbar-spacer"></div>
       <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
         <span>Habilidades</span>
       </button>
-      <span id="status" class="status"></span>
     </div>
 
     <!-- Franja 2: Escenario del juego -->
@@ -63,10 +60,10 @@ apps.forEach((a) => a.registerBlocks(Blockly));
 const stageEl = document.getElementById("stage") as HTMLDivElement;
 const blocklyDiv = document.getElementById("blocklyDiv") as HTMLDivElement;
 const gameSelect = document.getElementById("game-select") as HTMLSelectElement;
-const statusEl = document.getElementById("status") as HTMLSpanElement;
 
 const setStatus = (text: string) => {
-  statusEl.textContent = text;
+  const mazeStatus = document.querySelector(".maze-status");
+  if (mazeStatus) mazeStatus.textContent = text;
 };
 
 const WORKSPACE_OPTS = {
@@ -99,15 +96,11 @@ let workspace: unknown = createWorkspace(
 let appState: unknown = currentApp.createInitialState();
 let runtimeController: RuntimeController | null = null;
 
-const btnRun = document.getElementById("btnRun") as HTMLButtonElement;
-
 const updateButtonStates = (isRunning: boolean) => {
-  btnRun.disabled = isRunning;
   updateStagePlayButton(isRunning ? "disabled" : "play");
 };
 
 gameSelect.value = currentApp.id;
-setStatus("Editor listo ✅");
 updateButtonStates(false);
 
 // Función para obtener levelId del estado actual
@@ -157,6 +150,8 @@ function switchGame(appId: string): void {
 
   runtimeController?.stop();
   destroyWorkspace(workspace, blocklyDiv);
+  const levelBar = document.getElementById("level-bar");
+  if (levelBar) levelBar.innerHTML = "";
   currentApp = next;
   workspace = createWorkspace(
     Blockly,
@@ -193,31 +188,8 @@ document.getElementById("btnSkills")!.addEventListener("click", () => {
   toggleSkillsPanel();
 });
 
-// Event listener para el botón grande del stage
-document.addEventListener("click", (e) => {
-  const target = e.target as HTMLElement;
-  const stageButton = target.closest(".stage-play-button") as HTMLButtonElement;
-  if (stageButton && !stageButton.disabled) {
-    const state = stageButton.getAttribute("data-state");
-    if (state === "restart") {
-      // Reiniciar a posición inicial
-      runtimeController?.stop();
-      appState = currentApp.adapter.reset(appState);
-      if (typeof appState === "object" && appState) {
-        (appState as { status?: string; message?: string }).status = "idle";
-        (appState as { message?: string }).message = undefined;
-      }
-      currentApp.render(stageEl, appState, buildContext());
-      updateStagePlayButton("play");
-      setStatus("Listo para ejecutar");
-    } else {
-      // Ejecutar programa (mismo comportamiento que btnRun)
-      document.getElementById("btnRun")?.click();
-    }
-  }
-});
-
-document.getElementById("btnRun")!.addEventListener("click", () => {
+// Ejecutar programa (extraído para uso del botón del stage)
+function runProgramFromEditor(): void {
   try {
     const program = compileWorkspaceToAst(
       Blockly,
@@ -228,13 +200,14 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
 
     if (currentApp.checkConstraints) {
       const constraint = currentApp.checkConstraints(workspace, appState);
-      if (!constraint.ok) {
+        if (!constraint.ok) {
         if (typeof appState === "object" && appState) {
           (appState as { status?: string; message?: string }).status = "error";
           (appState as { message?: string }).message = constraint.message;
         }
         currentApp.render(stageEl, appState, buildContext());
         setStatus(constraint.message);
+        updateStagePlayButton("restart");
         return;
       }
     }
@@ -330,12 +303,12 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
               triggerErrorEffect(stageEl);
               currentApp.render(stageEl, appState, buildContext());
               setStatus(stateMessage ?? `Error: ${message}`);
-              // No cambiar a restart si hubo error
-              updateStagePlayButton("play");
+              updateStagePlayButton("restart");
               return;
             }
           }
           setStatus(`Error: ${message}`);
+          updateStagePlayButton("restart");
         }
       },
       { initialState: appState }
@@ -344,6 +317,27 @@ document.getElementById("btnRun")!.addEventListener("click", () => {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     setStatus(`Error: ${message}`);
+    updateStagePlayButton("restart");
+  }
+}
+
+document.addEventListener("click", (e) => {
+  const target = e.target as HTMLElement;
+  const stageButton = target.closest(".stage-play-button") as HTMLButtonElement;
+  if (!stageButton || stageButton.disabled) return;
+  const state = stageButton.getAttribute("data-state");
+  if (state === "restart") {
+    runtimeController?.stop();
+    appState = currentApp.adapter.reset(appState);
+    if (typeof appState === "object" && appState) {
+      (appState as { status?: string; message?: string }).status = "idle";
+      (appState as { message?: string }).message = undefined;
+    }
+    currentApp.render(stageEl, appState, buildContext());
+    updateStagePlayButton("play");
+    refreshBlockLimit();
+  } else {
+    runProgramFromEditor();
   }
 });
 

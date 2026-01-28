@@ -150,11 +150,16 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const container = document.createElement("div");
   container.className = "maze-stage";
 
-  // Barra de progreso de niveles
   const progressBar = document.createElement("div");
   progressBar.className = "maze-progress-bar";
   progressBar.setAttribute("role", "progressbar");
   progressBar.setAttribute("aria-label", "Niveles del juego");
+
+  const levelBarContainer = document.getElementById("level-bar");
+  if (levelBarContainer) {
+    levelBarContainer.innerHTML = "";
+    levelBarContainer.appendChild(progressBar);
+  }
 
   const canvas = document.createElement("canvas");
   canvas.className = "maze-canvas";
@@ -166,10 +171,8 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const statusEl = document.createElement("div");
   statusEl.className = "maze-status";
 
-  // Botón Play/Restart grande
   const stagePlayButton = createStagePlayButton();
 
-  container.appendChild(progressBar);
   container.appendChild(canvas);
   rootEl.appendChild(container);
   rootEl.appendChild(stagePlayButton);
@@ -579,7 +582,7 @@ const drawMaze = (state: MazeState): void => {
     ? PADDING + animationState.playerY * CELL + CELL / 2
     : PADDING + state.player.y * CELL + CELL / 2;
   const playerDir = animationState ? animationState.playerDir : state.player.dir;
-  const size = CELL * 0.28;
+  const size = CELL * 0.6;
 
   // Avanzar frame de caminar solo durante movimiento
   if (animationState) walkFrame += 1;
@@ -598,7 +601,7 @@ const drawMaze = (state: MazeState): void => {
     const animFrame = framesPerDir > 1 ? (walkFrame % Math.floor(framesPerDir)) : 0;
     const frameIndex = Math.min(dirIndex * Math.floor(framesPerDir) + animFrame, n - 1);
     const sx = frameIndex * fw;
-    const drawW = CELL * 0.9;
+    const drawW = CELL * 1.2;
     const drawH = (fh / fw) * drawW;
     ctx.drawImage(
       sprite!,

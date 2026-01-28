@@ -102,6 +102,12 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   progressBar.setAttribute("role", "progressbar");
   progressBar.setAttribute("aria-label", "Niveles del juego");
 
+  const levelBarContainer = document.getElementById("level-bar");
+  if (levelBarContainer) {
+    levelBarContainer.innerHTML = "";
+    levelBarContainer.appendChild(progressBar);
+  }
+
   const canvas = document.createElement("canvas");
   canvas.className = "maze-canvas";
   const canvasCtx = canvas.getContext("2d");
@@ -110,7 +116,6 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const statusEl = document.createElement("div");
   statusEl.className = "maze-status";
 
-  container.appendChild(progressBar);
   container.appendChild(canvas);
   container.appendChild(statusEl);
   rootEl.appendChild(container);
