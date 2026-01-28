@@ -281,46 +281,32 @@ export const updateBlockLimitCounter = (workspace: unknown, levelId: number): vo
   
   if (!instructionsEl) return;
   
-  // Si no hay límite, mostrar lista de instrucciones
+  const instructionsContent = instructionsEl.querySelector(".instructions-content");
+  if (!instructionsContent) return;
+  
+  // Si no hay límite, mostrar "sin límite"
   if (blockLimit === undefined) {
-    const instructionsContent = instructionsEl.querySelector(".instructions-content");
-    if (instructionsContent) {
-      const instructions = [
-        { name: "Mover", description: "Avanza una casilla hacia adelante" },
-        { name: "Retroceder", description: "Retrocede una casilla" },
-        { name: "Girar izquierda", description: "Gira 90° hacia la izquierda" },
-        { name: "Girar derecha", description: "Gira 90° hacia la derecha" },
-        { name: "Repetir", description: "Repite un bloque varias veces" },
-        { name: "Esperar", description: "Espera un tiempo antes de continuar" }
-      ];
-      
-      instructionsContent.innerHTML = instructions
-        .map(
-          (inst) => `
-        <div class="instruction-item">
-          <strong class="instruction-name">${inst.name}</strong>
-          <p class="instruction-desc">${inst.description}</p>
-        </div>
-      `
-        )
-        .join("");
-    }
+    instructionsContent.innerHTML = `
+      <div class="block-limit-counter">
+        <div class="block-limit-number">∞</div>
+        <div class="block-limit-label">sin límite</div>
+      </div>
+    `;
+    // Asegurar que los bloques estén habilitados cuando no hay límite
+    updateToolboxBlocks(workspace, true);
     return;
   }
   
-  // Si hay límite, mostrar contador grande
+  // Si hay límite, mostrar contador grande con número restante
   const currentCount = countBlocks(workspace);
   const remaining = Math.max(0, blockLimit - currentCount);
   
-  const instructionsContent = instructionsEl.querySelector(".instructions-content");
-  if (instructionsContent) {
-    instructionsContent.innerHTML = `
-      <div class="block-limit-counter">
-        <div class="block-limit-number">${remaining}</div>
-        <div class="block-limit-label">${remaining === 1 ? "instrucción disponible" : "instrucciones disponibles"}</div>
-      </div>
-    `;
-  }
+  instructionsContent.innerHTML = `
+    <div class="block-limit-counter">
+      <div class="block-limit-number">${remaining}</div>
+      <div class="block-limit-label">${remaining === 1 ? "instrucción disponible" : "instrucciones disponibles"}</div>
+    </div>
+  `;
   
   // Deshabilitar/habilitar bloques del toolbox según el límite
   updateToolboxBlocks(workspace, remaining > 0);
