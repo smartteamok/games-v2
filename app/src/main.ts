@@ -101,13 +101,19 @@ function teardownGameView(): void {
   if (levelBar) levelBar.innerHTML = "";
 }
 
-function setStatus(text: string): void {
-  // Status horizontal
-  const mazeStatus = document.querySelector(".maze-status");
-  if (mazeStatus) mazeStatus.textContent = text;
-  // Status vertical
+type StatusVariant = "normal" | "win" | "error";
+
+function setStatus(text: string, variant: StatusVariant = "normal"): void {
+  const update = (el: HTMLElement) => {
+    el.textContent = text;
+    el.classList.remove("status--win", "status--error");
+    if (variant === "win") el.classList.add("status--win");
+    else if (variant === "error") el.classList.add("status--error");
+  };
+  const mazeStatus = document.querySelector(".maze-status") as HTMLElement | null;
+  if (mazeStatus) update(mazeStatus);
   const statusVertical = document.getElementById("status-vertical");
-  if (statusVertical) statusVertical.textContent = text;
+  if (statusVertical) update(statusVertical);
 }
 
 function getLevelIdFromState(state: unknown): number | undefined {
@@ -221,7 +227,7 @@ function initGameView(gameId: string): void {
             (appState as { message?: string }).message = constraint.message;
           }
           currentApp.render(stageEl, appState, buildContext());
-          setStatus(constraint.message);
+          setStatus(constraint.message, "error");
           updateStagePlayButton("restart");
           return;
         }
@@ -269,7 +275,7 @@ function initGameView(gameId: string): void {
               if (statusValue === "win") {
                 triggerWinEffect(stageEl);
                 if (currentApp) currentApp.render(stageEl, appState, buildContext());
-                setStatus(stateMessage ?? "Ganaste ✅");
+                setStatus(stateMessage ?? "Ganaste ✅", "win");
                 updateStagePlayButton("play");
                 advanceToNextLevelIfWin();
                 return;
@@ -277,12 +283,12 @@ function initGameView(gameId: string): void {
               if (statusValue === "error") {
                 triggerErrorEffect(stageEl);
                 if (currentApp) currentApp.render(stageEl, appState, buildContext());
-                setStatus(stateMessage ?? `Error: ${message}`);
+                setStatus(stateMessage ?? `Error: ${message}`, "error");
                 updateStagePlayButton("restart");
                 return;
               }
             }
-            setStatus(`Error: ${message}`);
+            setStatus(`Error: ${message}`, "error");
             updateStagePlayButton("restart");
           }
         },
@@ -291,7 +297,7 @@ function initGameView(gameId: string): void {
       setStatus("Ejecutando...");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setStatus(`Error: ${message}`);
+      setStatus(`Error: ${message}`, "error");
       updateStagePlayButton("restart");
     }
   }
@@ -340,6 +346,7 @@ function initGameView(gameId: string): void {
         (appState as { message?: string }).message = undefined;
       }
       if (currentApp) currentApp.render(stageEl, appState, buildContext());
+      setStatus("Listo", "normal");
       updateStagePlayButton("play");
       refreshBlockLimit();
     } else {
@@ -385,7 +392,7 @@ function render(route: ReturnType<typeof getRoute>): void {
       () => initGameView(route.gameId),
       (err) => {
         console.error(err);
-        setStatus("Error al cargar Blockly");
+        setStatus("Error al cargar Blockly", "error");
       }
     );
   } else {

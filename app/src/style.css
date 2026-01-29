@@ -171,9 +171,21 @@ body {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   color: var(--color-text);
   white-space: nowrap;
+}
+
+.layout-vertical .status-vertical.status--win {
+  background: #059669;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.layout-vertical .status-vertical.status--error {
+  background: #DC2626;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .layout-vertical .stage-column-vertical {
@@ -617,7 +629,7 @@ body {
 .maze-status {
   min-height: 24px;
   color: var(--color-text);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 500;
   padding: 12px 16px;
   border-radius: 12px;
@@ -627,6 +639,18 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
   white-space: nowrap;
+}
+
+.maze-status.status--win {
+  background: #059669;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.maze-status.status--error {
+  background: #DC2626;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .blocklyDiv {
