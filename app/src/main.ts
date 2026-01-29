@@ -102,8 +102,12 @@ function teardownGameView(): void {
 }
 
 function setStatus(text: string): void {
+  // Status horizontal
   const mazeStatus = document.querySelector(".maze-status");
   if (mazeStatus) mazeStatus.textContent = text;
+  // Status vertical
+  const statusVertical = document.getElementById("status-vertical");
+  if (statusVertical) statusVertical.textContent = text;
 }
 
 function getLevelIdFromState(state: unknown): number | undefined {
@@ -324,7 +328,8 @@ function initGameView(gameId: string): void {
 
   document.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
-    const stageButton = target.closest(".stage-play-button") as HTMLButtonElement;
+    // Detectar botón horizontal o vertical
+    const stageButton = (target.closest(".stage-play-button") || target.closest(".stage-play-button-vertical")) as HTMLButtonElement;
     if (!stageButton || stageButton.disabled) return;
     const state = stageButton.getAttribute("data-state");
     if (state === "restart") {

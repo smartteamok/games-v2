@@ -222,6 +222,9 @@ export const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>):
   }
   rootEl.innerHTML = "";
 
+  // Detectar si estamos en layout vertical
+  const isVertical = document.querySelector(".layout-vertical") !== null;
+
   const container = document.createElement("div");
   container.className = "maze-stage";
 
@@ -243,20 +246,33 @@ export const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>):
     throw new Error("No se pudo crear el canvas del laberinto.");
   }
 
-  const statusEl = document.createElement("div");
-  statusEl.className = "maze-status";
+  let statusEl: HTMLDivElement;
+  let stagePlayButton: HTMLButtonElement | undefined;
 
-  const stagePlayButton = createStagePlayButton();
+  if (isVertical) {
+    // En vertical, el play button y status ya existen en el HTML
+    statusEl = document.getElementById("status-vertical") as HTMLDivElement;
+    if (!statusEl) {
+      statusEl = document.createElement("div");
+      statusEl.className = "status-vertical";
+      statusEl.id = "status-vertical";
+    }
+    stagePlayButton = document.getElementById("stage-play-btn-vertical") as HTMLButtonElement;
+  } else {
+    // En horizontal, crear play button y status
+    statusEl = document.createElement("div");
+    statusEl.className = "maze-status";
+    stagePlayButton = createStagePlayButton();
+    rootEl.appendChild(stagePlayButton);
+    
+    const statusContainer = document.createElement("div");
+    statusContainer.className = "maze-status-container";
+    statusContainer.appendChild(statusEl);
+    rootEl.appendChild(statusContainer);
+  }
 
   container.appendChild(canvas);
   rootEl.appendChild(container);
-  rootEl.appendChild(stagePlayButton);
-  
-  // Crear contenedor para el status a la derecha del maze
-  const statusContainer = document.createElement("div");
-  statusContainer.className = "maze-status-container";
-  statusContainer.appendChild(statusEl);
-  rootEl.appendChild(statusContainer);
 
   // Crear panel lateral de skills solo una vez
   if (!skillsPanel) {
@@ -294,7 +310,7 @@ export const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>):
 
   loadPlayerSprite(() => scheduleRedraw());
 
-  // Actualizar status en su nuevo contenedor
+  // Actualizar status
   if (statusEl) {
     const state = ctx.getState?.() as MazeState | undefined;
     statusEl.textContent = state ? updateStatusText(state) : "Listo.";
@@ -379,9 +395,30 @@ const updateStagePlayButtonState = (button: HTMLButtonElement, state: "play" | "
 
 // Exportar función para actualizar el estado del botón desde main.ts
 export const updateStagePlayButton = (state: "play" | "restart" | "disabled"): void => {
-  const button = document.querySelector(".stage-play-button") as HTMLButtonElement;
-  if (button) {
-    updateStagePlayButtonState(button, state);
+  // Botón horizontal (layout horizontal)
+  const buttonH = document.querySelector(".stage-play-button") as HTMLButtonElement;
+  if (buttonH) {
+    updateStagePlayButtonState(buttonH, state);
+  }
+  // Botón vertical (layout vertical)
+  const buttonV = document.getElementById("stage-play-btn-vertical") as HTMLButtonElement;
+  if (buttonV) {
+    updateVerticalPlayButtonState(buttonV, state);
+  }
+};
+
+const updateVerticalPlayButtonState = (button: HTMLButtonElement, state: "play" | "restart" | "disabled"): void => {
+  button.setAttribute("data-state", state);
+  button.disabled = state === "disabled";
+  if (state === "play") {
+    button.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>`;
+    button.setAttribute("aria-label", "Ejecutar programa");
+  } else if (state === "restart") {
+    button.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/></svg>`;
+    button.setAttribute("aria-label", "Reiniciar y ejecutar");
+  } else {
+    button.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>`;
+    button.setAttribute("aria-label", "Ejecutando...");
   }
 };
 

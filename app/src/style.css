@@ -77,16 +77,103 @@ body {
   min-height: 0;
 }
 
-.layout-vertical .instructions-vertical {
+/* Barra de controles en layout vertical: play | bloques disponibles | status */
+.layout-vertical .controls-bar-vertical {
   flex-shrink: 0;
-  border-top: 1px solid var(--color-border);
-  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
   background: var(--color-bg-light);
+  border-top: 1px solid var(--color-border);
 }
 
-.layout-vertical .instructions-vertical .instructions-title {
-  margin: 0 0 6px 0;
+.layout-vertical .stage-play-button-vertical {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #9333EA;
+  border: none;
+  box-shadow: 0 3px 8px rgba(147, 51, 234, 0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.layout-vertical .stage-play-button-vertical:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.5);
+  background: #7C3AED;
+}
+
+.layout-vertical .stage-play-button-vertical:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.layout-vertical .stage-play-button-vertical:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #A78BFA;
+}
+
+.layout-vertical .stage-play-button-vertical[data-state="restart"] {
+  background: #F59E0B;
+  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.35);
+}
+
+.layout-vertical .stage-play-button-vertical[data-state="restart"]:hover:not(:disabled) {
+  background: #D97706;
+}
+
+.layout-vertical .instructions-vertical {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.layout-vertical .instructions-vertical .instructions-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layout-vertical .instructions-vertical .block-limit-counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(76, 151, 255, 0.1);
+  border-radius: 8px;
+}
+
+.layout-vertical .instructions-vertical .block-limit-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.layout-vertical .instructions-vertical .block-limit-label {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+.layout-vertical .status-vertical {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   font-size: 0.9rem;
+  color: var(--color-text);
+  white-space: nowrap;
 }
 
 .layout-vertical .stage-column-vertical {

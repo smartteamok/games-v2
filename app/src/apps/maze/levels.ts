@@ -59,7 +59,8 @@ export const levels: MazeLevel[] = [
     walls: [],
     start: { x: 0, y: 2, dir: "E" },
     goal: { x: 4, y: 2 },
-    constraints: { maxBlocks: 8, mustUseRepeat: true }
+    constraints: { maxBlocks: 8, mustUseRepeat: true },
+    blockLimit: 8
   },
   {
     id: 5,
@@ -131,6 +132,7 @@ export const levels: MazeLevel[] = [
     ],
     start: { x: 0, y: 0, dir: "E" },
     goal: { x: 5, y: 4 },
-    constraints: { maxBlocks: 14 }
+    constraints: { maxBlocks: 14 },
+    blockLimit: 14
   }
 ];

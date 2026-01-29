@@ -32,11 +32,16 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
           <div id="blocklyArea" class="blocklyArea"></div>
           <div id="blocklyDiv" class="blocklyDiv"></div>
         </div>
-        <div id="instructions" class="instructions instructions-vertical">
-          <h3 class="instructions-title">Instrucciones disponibles</h3>
-          <div class="instructions-content">
-            <p class="instructions-placeholder">Las instrucciones se mostrarán aquí.</p>
+        <div class="controls-bar-vertical">
+          <button id="stage-play-btn-vertical" class="stage-play-button-vertical" data-state="play" aria-label="Ejecutar programa">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>
+          </button>
+          <div id="instructions" class="instructions instructions-vertical">
+            <div class="instructions-content">
+              <p class="instructions-placeholder">—</p>
+            </div>
           </div>
+          <div id="status-vertical" class="status-vertical">Listo</div>
         </div>
       </div>
       <div class="stage-column-vertical">
