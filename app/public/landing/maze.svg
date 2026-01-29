@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180">
+  <rect width="320" height="180" fill="#E9D5FF" rx="8"/>
+  <rect x="40" y="60" width="48" height="48" fill="#8B7355" rx="4"/>
+  <rect x="136" y="60" width="48" height="48" fill="#8B7355" rx="4"/>
+  <rect x="232" y="60" width="48" height="48" fill="#10B981" rx="24"/>
+  <path d="M80 84 L120 84 L120 132 L160 132 L160 84 L200 84" stroke="#4C97FF" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <text x="160" y="165" text-anchor="middle" fill="#6B21A8" font-family="system-ui,sans-serif" font-size="14" font-weight="600">Laberinto</text>
+</svg>
