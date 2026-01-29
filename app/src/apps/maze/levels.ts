@@ -19,6 +19,14 @@ export type MazeLevel = {
   blockLimit?: number;
   /** Imagen de fondo del canvas. Ruta relativa a public/game-sprites/backgrounds/ (ej: "level1.png"). */
   backgroundImage?: string;
+  /** Instrucciones iniciales para el nivel (ej. "Llegá a la meta usando solo 8 bloques"). */
+  instructions?: string;
+  /**
+   * Bloques iniciales por nivel (Blockly XML). Por defecto vacío.
+   * Horizontal: use "initialBlocks" (tipos game_*). Vertical: "initialBlocksVertical" (tipos v_game_*).
+   */
+  initialBlocks?: string;
+  initialBlocksVertical?: string;
 };
 
 export const levels: MazeLevel[] = [

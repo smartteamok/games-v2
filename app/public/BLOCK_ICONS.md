@@ -11,12 +11,11 @@ Las **fuentes de imágenes de los bloques son distintas** para bloques horizonta
 | Uso | Carpeta | Ejemplo |
 |-----|---------|---------|
 | Mover, Atrás, Girar | `public/game-icons/` | `move-right.svg`, `move-left.svg`, `turn-left.svg`, `turn-right.svg` |
-| Inicio (play verde) | `public/icons/` | `play-green.svg` |
+| Inicio | Bloque por defecto de Scratch (`event_whenflagclicked`), sin ícono custom |
 | Repetir, Esperar | `public/vendor/scratch-blocks/media/icons/` | `control_repeat.svg`, `control_wait.svg` |
 
 **Dónde se cargan:** `app/src/apps/maze/mazeApp.ts`  
 - Constantes `ICON_MOVE`, `ICON_BACK`, `ICON_TURN_LEFT`, `ICON_TURN_RIGHT` → `BASE_URL + "game-icons/..."`  
-- `ICON_INICIO` → `BASE_URL + "icons/play-green.svg"`  
 - `pathToMedia` para `game_repeat` y `game_wait` → `vendor/scratch-blocks/media/`
 
 ---
@@ -38,7 +37,7 @@ Las **fuentes de imágenes de los bloques son distintas** para bloques horizonta
 
 ## Resumen
 
-- **Horizontales:** `game-icons/` + `icons/play-green.svg`.
-- **Verticales:** `game-icons-vertical/` (incluye `play-green.svg` ahí).
+- **Horizontales:** `game-icons/` para Mover/Atrás/Girar; inicio = bloque bandera de Scratch.
+- **Verticales:** `game-icons-vertical/` (incluye `play-green.svg` para el bloque "Inicio" con play verde).
 
 Podés usar iconos distintos en cada carpeta para diferenciar horizontal y vertical.

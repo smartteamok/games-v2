@@ -9,7 +9,13 @@ import { loadProject } from "./core/storage/projectStore";
 import { apps, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
-import { toggleSkillsPanel, updateStagePlayButton, updateBlockLimitCounter } from "./apps/maze/mazeApp";
+import {
+  toggleSkillsPanel,
+  updateStagePlayButton,
+  updateBlockLimitCounter,
+  getLevel,
+  applyInitialBlocks
+} from "./apps/maze/mazeApp";
 import { getRoute, onRouteChange, navigateToGame } from "./router";
 import { mountLanding } from "./pages/landing";
 import { getGameLayoutHtml, showComingSoon } from "./pages/gameView";
@@ -77,13 +83,14 @@ function loadBlocklyScripts(blockType: "horizontal" | "vertical"): Promise<void>
 
 function getWorkspaceOpts(app: AppDefinition<unknown>) {
   const blockType = app.blockType ?? "horizontal";
+  const startType = blockType === "vertical" ? "event_inicio" : "event_whenflagclicked";
   return {
     horizontalLayout: blockType === "horizontal",
     toolboxPosition: (blockType === "vertical" ? "start" : "end") as "start" | "end",
     mediaPath: `${BASE_URL}vendor/scratch-blocks/media/`,
     trashcan: true,
     scrollbars: true,
-    fixedStartBlock: { type: "event_inicio", x: 40, y: 30 }
+    fixedStartBlock: { type: startType, x: 40, y: 30 }
   };
 }
 
@@ -193,6 +200,9 @@ function initGameView(gameId: string): void {
       const nextLevelId = getLevelIdFromState(nextState);
       if (prevLevelId !== nextLevelId && workspace && nextLevelId !== undefined) {
         (workspace as { clear?: () => void }).clear?.();
+        const level = getLevel(nextLevelId);
+        const blockType = (currentApp as { blockType?: "horizontal" | "vertical" })?.blockType ?? "horizontal";
+        applyInitialBlocks(Blockly, workspace, level, blockType);
         appState = nextState;
         if (currentApp) currentApp.render(stageEl, appState, buildContext());
         refreshBlockLimit();

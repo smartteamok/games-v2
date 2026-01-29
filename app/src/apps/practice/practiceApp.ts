@@ -444,7 +444,7 @@ export const practiceApp: AppDefinition<MazeState> = {
   },
   adapter,
   compileOptions: {
-    START_TYPES: ["event_inicio", "event_whenflagclicked"],
+    START_TYPES: ["event_whenflagclicked"],
     MOVE_TYPES: ["game_move"],
     BACK_TYPES: ["game_back"],
     TURN_LEFT_TYPES: ["game_turn_left"],

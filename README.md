@@ -45,6 +45,7 @@ Ver [TESTING_GUIDE.md](./TESTING_GUIDE.md) para instrucciones completas.
 
 - [TESTING_GUIDE.md](./TESTING_GUIDE.md) - Cómo probar y desplegar
 - [PERSONALIZATION_GUIDE.md](./PERSONALIZATION_GUIDE.md) - Guía de personalización
+- [docs/CONFIGURACION_JUEGOS.md](./docs/CONFIGURACION_JUEGOS.md) - Configuración de juegos: obstáculos, límite de bloques, instrucciones iniciales, bloques iniciales por nivel
 - [ANIMATION_FILES_SPEC.md](./ANIMATION_FILES_SPEC.md) - Especificaciones de archivos de animación
 - [BLOCKLY_SHADOW_BLOCK_RENDERING_DEBUG.md](./BLOCKLY_SHADOW_BLOCK_RENDERING_DEBUG.md) - Debugging de renderizado
 

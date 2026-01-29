@@ -31,7 +31,7 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#4CBF56",
+        colour: "#EECE1C",
         tooltip: "Inicio del programa"
       });
     }

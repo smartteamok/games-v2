@@ -52,7 +52,6 @@ const ICON_MOVE = `${BASE_URL}game-icons/move-right.svg`;
 const ICON_BACK = `${BASE_URL}game-icons/move-left.svg`;
 const ICON_TURN_LEFT = `${BASE_URL}game-icons/turn-left.svg`;
 const ICON_TURN_RIGHT = `${BASE_URL}game-icons/turn-right.svg`;
-const ICON_INICIO = `${BASE_URL}icons/play-green.svg`;
 
 const DIR_ORDER: Direction[] = ["N", "E", "S", "W"];
 const DIR_DELTAS: Record<Direction, { x: number; y: number }> = {
@@ -204,6 +203,50 @@ preloadMazeBackgrounds();
 
 export const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
+
+export type BlockType = "horizontal" | "vertical";
+
+/**
+ * Aplica bloques iniciales del nivel al workspace (por defecto vacío).
+ * Horizontal: initialBlocks (game_*). Vertical: initialBlocksVertical (v_game_*).
+ */
+export const applyInitialBlocks = (
+  Blockly: any,
+  workspace: any,
+  level: MazeLevel,
+  blockType: BlockType
+): void => {
+  const xmlStr = blockType === "vertical" ? level.initialBlocksVertical : level.initialBlocks;
+  if (!xmlStr || !xmlStr.trim()) return;
+  const Xml = Blockly.Xml;
+  if (!Xml?.textToDom || !Xml?.domToWorkspace) return;
+  const startType = blockType === "vertical" ? "event_inicio" : "event_whenflagclicked";
+  let dom: Element;
+  try {
+    dom = Xml.textToDom(xmlStr.trim().startsWith("<") ? xmlStr : `<xml>${xmlStr}</xml>`);
+  } catch {
+    return;
+  }
+  const topBefore = new Set((workspace.getTopBlocks?.(true) ?? []).map((b: any) => b.id));
+  const prevDisabled = (Blockly.Events as any)?.disabled;
+  try {
+    if ((Blockly.Events as any)?.disable) (Blockly.Events as any).disable();
+    Xml.domToWorkspace(dom, workspace);
+  } finally {
+    if (!prevDisabled && (Blockly.Events as any)?.enable) (Blockly.Events as any).enable();
+  }
+  const topAfter = workspace.getTopBlocks?.(true) ?? [];
+  const startBlock = topAfter.find((b: any) => b.type === startType);
+  const added = topAfter.filter((b: any) => !topBefore.has(b.id));
+  const first = added[0];
+  if (startBlock?.nextConnection && first?.previousConnection) {
+    try {
+      startBlock.nextConnection.connect(first.previousConnection);
+    } catch {
+      /* ignore connection errors */
+    }
+  }
+};
 
 export const makeInitialState = (levelId: number, completedLevels: number[] = []): MazeState => {
   const level = getLevel(levelId);
@@ -914,19 +957,6 @@ export const drawMaze = (state: MazeState): void => {
 };
 
 export const registerMazeLikeBlocks = (Blockly: any) => {
-  Blockly.Blocks["event_inicio"] = {
-    init: function () {
-      this.appendDummyInput()
-        .appendField(new Blockly.FieldImage(ICON_INICIO, GAME_ICON_SIZE, GAME_ICON_SIZE, "Inicio"))
-        .appendField("Inicio");
-      this.setPreviousStatement(null);
-      this.setNextStatement(true);
-      this.setInputsInline(true);
-      this.setTooltip("Inicio del programa");
-      this.setColour("#4CBF56");
-    }
-  };
-
   Blockly.Blocks["game_move"] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -1233,7 +1263,7 @@ export const mazeApp: AppDefinition<MazeState> = {
   },
   adapter,
   compileOptions: {
-    START_TYPES: ["event_inicio", "event_whenflagclicked"],
+    START_TYPES: ["event_whenflagclicked"],
     MOVE_TYPES: ["game_move"],
     BACK_TYPES: ["game_back"],
     TURN_LEFT_TYPES: ["game_turn_left"],
