@@ -19,7 +19,6 @@ const GAME_COLOR = "#4C97FF";
 const BASE_URL = import.meta.env.BASE_URL;
 const pathToMedia = `${BASE_URL}vendor/scratch-blocks/media/`;
 const pathToIcons = `${BASE_URL}game-icons/`;
-
 export const registerVerticalMazeBlocks = (Blockly: any): void => {
   Blockly.Blocks["v_game_move"] = {
     init: function () {
@@ -171,7 +170,7 @@ export const mazeVerticalApp: AppDefinition<MazeState> = {
   },
   adapter,
   compileOptions: {
-    START_TYPES: ["event_whenflagclicked"],
+    START_TYPES: ["event_inicio", "event_whenflagclicked"],
     MOVE_TYPES: ["v_game_move"],
     BACK_TYPES: ["v_game_back"],
     TURN_LEFT_TYPES: ["v_game_turn_left"],

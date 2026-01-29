@@ -165,6 +165,21 @@ body {
   white-space: nowrap;
 }
 
+.layout-vertical .instructions-vertical .block-limit-exceeded {
+  background: rgba(220, 38, 38, 0.12);
+  color: #DC2626;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.layout-vertical .instructions-vertical .block-limit-exclaim {
+  font-size: 1.15rem;
+}
+
+.layout-vertical .instructions-vertical .block-limit-exceeded-msg {
+  color: #DC2626;
+}
+
 .layout-vertical .status-vertical {
   flex-shrink: 0;
   padding: 8px 14px;
@@ -916,6 +931,26 @@ body {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.block-limit-exceeded {
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 12px 16px;
+  border-radius: 8px;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.block-limit-exclaim {
+  font-size: 1.25rem;
+  margin-right: 2px;
+}
+
+.block-limit-exceeded-msg {
+  color: #DC2626;
 }
 
 /* ========== Landing ========== */

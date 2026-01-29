@@ -83,7 +83,7 @@ function getWorkspaceOpts(app: AppDefinition<unknown>) {
     mediaPath: `${BASE_URL}vendor/scratch-blocks/media/`,
     trashcan: true,
     scrollbars: true,
-    fixedStartBlock: { type: "event_whenflagclicked", x: 40, y: 30 }
+    fixedStartBlock: { type: "event_inicio", x: 40, y: 30 }
   };
 }
 
@@ -189,6 +189,16 @@ function initGameView(gameId: string): void {
     getWorkspace: () => workspace,
     setStatus,
     updateState: (nextState) => {
+      const prevLevelId = getLevelIdFromState(appState);
+      const nextLevelId = getLevelIdFromState(nextState);
+      if (prevLevelId !== nextLevelId && workspace && nextLevelId !== undefined) {
+        (workspace as { clear?: () => void }).clear?.();
+        appState = nextState;
+        if (currentApp) currentApp.render(stageEl, appState, buildContext());
+        refreshBlockLimit();
+        setStatus(`Nivel ${nextLevelId} listo`, "normal");
+        return;
+      }
       appState = nextState;
       if (currentApp) currentApp.render(stageEl, appState, buildContext());
       refreshBlockLimit();

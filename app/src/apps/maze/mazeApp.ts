@@ -51,6 +51,7 @@ const ICON_MOVE = `${BASE_URL}game-icons/move-right.svg`;
 const ICON_BACK = `${BASE_URL}game-icons/move-left.svg`;
 const ICON_TURN_LEFT = `${BASE_URL}game-icons/turn-left.svg`;
 const ICON_TURN_RIGHT = `${BASE_URL}game-icons/turn-right.svg`;
+const ICON_INICIO = `${BASE_URL}icons/play-green.svg`;
 
 const DIR_ORDER: Direction[] = ["N", "E", "S", "W"];
 const DIR_DELTAS: Record<Direction, { x: number; y: number }> = {
@@ -168,6 +169,18 @@ const loadGoalSprite = (): HTMLImageElement | null => {
 };
 
 loadGoalSprite();
+
+/** Precarga sprites de obstáculos usados en los niveles para que estén listos al inicio. */
+const preloadObstacleSprites = (): void => {
+  const types = new Set<string>();
+  for (const level of levels) {
+    for (const w of level.walls) {
+      if (w.type) types.add(w.type);
+    }
+  }
+  for (const t of types) loadObstacleSprite(t);
+};
+preloadObstacleSprites();
 
 export const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
@@ -430,8 +443,8 @@ const countBlocks = (workspace: any): number => {
   let count = 0;
   
   for (const block of allBlocks) {
-    // Excluir el bloque inicial "event_whenflagclicked"
-    if (block.type === "event_whenflagclicked") {
+    // Excluir bloques de inicio (event_inicio o event_whenflagclicked por proyectos guardados)
+    if (block.type === "event_inicio" || block.type === "event_whenflagclicked") {
       continue;
     }
     // Excluir shadow blocks (bloques de input numérico que vienen con otros bloques)
@@ -472,19 +485,27 @@ export const updateBlockLimitCounter = (workspace: unknown, levelId: number): vo
     return;
   }
   
-  // Si hay límite, mostrar contador grande con número restante
   const currentCount = countBlocks(workspace);
-  const remaining = Math.max(0, blockLimit - currentCount);
-  
-  instructionsContent.innerHTML = `
-    <div class="block-limit-counter">
-      <div class="block-limit-number">${remaining}</div>
-      <div class="block-limit-label">${remaining === 1 ? "instrucción disponible" : "instrucciones disponibles"}</div>
-    </div>
-  `;
-  
-  // Deshabilitar/habilitar bloques del toolbox según el límite
-  updateToolboxBlocks(workspace, remaining > 0);
+  const remaining = blockLimit - currentCount;
+  const exceeded = remaining < 0;
+
+  if (exceeded) {
+    instructionsContent.innerHTML = `
+      <div class="block-limit-counter block-limit-exceeded">
+        <span class="block-limit-exclaim">¡</span>
+        <span class="block-limit-exceeded-msg">Cantidad de bloques superada</span>
+      </div>
+    `;
+  } else {
+    instructionsContent.innerHTML = `
+      <div class="block-limit-counter">
+        <div class="block-limit-number">${remaining}</div>
+        <div class="block-limit-label">${remaining === 1 ? "instrucción disponible" : "instrucciones disponibles"}</div>
+      </div>
+    `;
+  }
+
+  updateToolboxBlocks(workspace, !exceeded);
 };
 
 // Función para deshabilitar/habilitar bloques del toolbox
@@ -852,6 +873,19 @@ export const drawMaze = (state: MazeState): void => {
 };
 
 export const registerMazeLikeBlocks = (Blockly: any) => {
+  Blockly.Blocks["event_inicio"] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField(new Blockly.FieldImage(ICON_INICIO, GAME_ICON_SIZE, GAME_ICON_SIZE, "Inicio"))
+        .appendField("Inicio");
+      this.setPreviousStatement(null);
+      this.setNextStatement(true);
+      this.setInputsInline(true);
+      this.setTooltip("Inicio del programa");
+      this.setColour("#4CBF56");
+    }
+  };
+
   Blockly.Blocks["game_move"] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -1119,6 +1153,7 @@ export const createMazeCheckConstraints = (repeatBlockType: string) => (
       (type) =>
         !type.startsWith("dropdown_") &&
         !type.startsWith("math_") &&
+        type !== "event_inicio" &&
         type !== "event_whenflagclicked"
     );
   if (constraints.maxBlocks !== undefined && blockTypes.length > constraints.maxBlocks) {
@@ -1157,7 +1192,7 @@ export const mazeApp: AppDefinition<MazeState> = {
   },
   adapter,
   compileOptions: {
-    START_TYPES: ["event_whenflagclicked"],
+    START_TYPES: ["event_inicio", "event_whenflagclicked"],
     MOVE_TYPES: ["game_move"],
     BACK_TYPES: ["game_back"],
     TURN_LEFT_TYPES: ["game_turn_left"],
