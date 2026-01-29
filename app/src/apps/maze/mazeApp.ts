@@ -72,6 +72,11 @@ let resizeObserver: ResizeObserver | null = null;
 let playerSprite: HTMLImageElement | null = null;
 let playerSpriteFrames = 4;
 let walkFrame = 0;
+let lastWalkFrameTime = 0;
+
+/** Milisegundos entre cada avance del frame de caminata. Aumentar = animación más lenta. */
+const WALK_FRAME_INTERVAL_MS = 120;
+
 let spriteLoadCallback: (() => void) | null = null;
 
 const loadPlayerSprite = (onLoaded?: () => void): HTMLImageElement | null => {
@@ -634,8 +639,14 @@ const drawMaze = (state: MazeState): void => {
   const playerDir = animationState ? animationState.playerDir : state.player.dir;
   const size = CELL * 0.6;
 
-  // Avanzar frame de caminar solo durante movimiento
-  if (animationState) walkFrame += 1;
+  // Avanzar frame de caminar solo durante movimiento, según intervalo (no cada tick)
+  if (animationState) {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (now - lastWalkFrameTime >= WALK_FRAME_INTERVAL_MS) {
+      walkFrame += 1;
+      lastWalkFrameTime = now;
+    }
+  }
 
   const sprite = loadPlayerSprite();
   const useSprite = sprite && sprite.complete && sprite.naturalWidth > 0;
