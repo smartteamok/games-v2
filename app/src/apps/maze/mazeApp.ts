@@ -15,7 +15,8 @@ type MazeState = {
   player: { x: number; y: number; dir: Direction };
   status: MazeStatus;
   message?: string;
-  completedLevels?: number[]; // IDs de niveles completados
+  completedLevels?: number[];
+  visitedCells?: Array<{ x: number; y: number }>; // Celdas por las que pasó el sprite
 };
 
 type MazeUI = {
@@ -74,10 +75,27 @@ let playerSpriteFrames = 4;
 let walkFrame = 0;
 let lastWalkFrameTime = 0;
 
-/** Milisegundos entre cada avance del frame de caminata. Aumentar = animación más lenta. */
+/** Milisegundos entre cada avance del frame de caminata/idle. Aumentar = animación más lenta. */
 const WALK_FRAME_INTERVAL_MS = 120;
+const IDLE_FRAME_INTERVAL_MS = 400; // Animación idle más lenta
+
+let idleFrame = 0;
+let lastIdleFrameTime = 0;
 
 let spriteLoadCallback: (() => void) | null = null;
+
+// Sprites de obstáculos: caché por tipo. Cada sprite tiene 2 frames horizontales.
+const obstacleSprites: Map<string, HTMLImageElement> = new Map();
+let obstacleFrame = 0;
+let lastObstacleFrameTime = 0;
+const OBSTACLE_FRAME_INTERVAL_MS = 500;
+
+// Sprite de la meta
+let goalSprite: HTMLImageElement | null = null;
+let goalSpriteFrames = 1;
+let goalFrame = 0;
+let lastGoalFrameTime = 0;
+const GOAL_FRAME_INTERVAL_MS = 400;
 
 const loadPlayerSprite = (onLoaded?: () => void): HTMLImageElement | null => {
   if (onLoaded) {
@@ -125,6 +143,32 @@ const loadPlayerSprite = (onLoaded?: () => void): HTMLImageElement | null => {
 
 loadPlayerSprite();
 
+/** Carga sprite de obstáculo. Ruta: public/game-sprites/obstacles/{type}.png (2 frames horizontales) */
+const loadObstacleSprite = (type: string): HTMLImageElement | null => {
+  if (obstacleSprites.has(type)) return obstacleSprites.get(type) ?? null;
+  const img = new Image();
+  img.src = `${BASE_URL}game-sprites/obstacles/${type}.png`;
+  obstacleSprites.set(type, img);
+  return img;
+};
+
+/** Carga sprite de la meta. Ruta: public/game-sprites/goal.png (1 o 2 frames horizontales) */
+const loadGoalSprite = (): HTMLImageElement | null => {
+  if (goalSprite) return goalSprite;
+  goalSprite = new Image();
+  goalSprite.onload = () => {
+    if (!goalSprite) return;
+    const w = goalSprite.naturalWidth;
+    const h = goalSprite.naturalHeight;
+    if (w >= h * 1.8) goalSpriteFrames = 2;
+    else goalSpriteFrames = 1;
+  };
+  goalSprite.src = `${BASE_URL}game-sprites/goal.png`;
+  return goalSprite;
+};
+
+loadGoalSprite();
+
 const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
 
@@ -135,7 +179,8 @@ const makeInitialState = (levelId: number, completedLevels: number[] = []): Maze
     player: { ...level.start },
     status: "idle",
     message: undefined,
-    completedLevels
+    completedLevels,
+    visitedCells: [{ x: level.start.x, y: level.start.y }]
   };
 };
 
@@ -566,6 +611,15 @@ const drawMaze = (state: MazeState): void => {
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, ui.canvas.width, ui.canvas.height);
 
+  // Dibujar celdas visitadas con color más fuerte (camino recorrido)
+  const visited = state.visitedCells ?? [];
+  for (const cell of visited) {
+    const cellX = PADDING + cell.x * CELL;
+    const cellY = PADDING + cell.y * CELL;
+    ctx.fillStyle = "rgba(76, 151, 255, 0.25)"; // Azul suave
+    ctx.fillRect(cellX + 1, cellY + 1, CELL - 2, CELL - 2);
+  }
+
   // Grid más sutil
   ctx.strokeStyle = "#E5E7EB";
   ctx.lineWidth = 1;
@@ -584,50 +638,90 @@ const drawMaze = (state: MazeState): void => {
     ctx.stroke();
   }
 
-  // Paredes con efecto 3D (marrón/beige con sombra)
+  // Actualizar frame de obstáculos animados
+  const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (now - lastObstacleFrameTime >= OBSTACLE_FRAME_INTERVAL_MS) {
+    obstacleFrame = (obstacleFrame + 1) % 2;
+    lastObstacleFrameTime = now;
+  }
+
+  // Obstáculos: si tienen type, usar sprite; sino dibujo por defecto
   for (const wall of level.walls) {
+    const wallCenterX = PADDING + wall.x * CELL + CELL / 2;
+    const wallCenterY = PADDING + wall.y * CELL + CELL / 2;
+
+    if (wall.type) {
+      const obsSprite = loadObstacleSprite(wall.type);
+      if (obsSprite && obsSprite.complete && obsSprite.naturalWidth > 0) {
+        const ow = obsSprite.naturalWidth;
+        const oh = obsSprite.naturalHeight;
+        const hasAnim = ow >= oh * 1.8; // 2 frames si ancho >= 2x alto
+        const frames = hasAnim ? 2 : 1;
+        const fw = ow / frames;
+        const fh = oh;
+        const frameIdx = hasAnim ? obstacleFrame : 0;
+        const sx = frameIdx * fw;
+        const drawSize = CELL * 0.9;
+        const drawH = (fh / fw) * drawSize;
+        ctx.drawImage(obsSprite, sx, 0, fw, fh, wallCenterX - drawSize / 2, wallCenterY - drawH / 2, drawSize, drawH);
+        continue;
+      }
+    }
+
+    // Fallback: dibujo por defecto (marrón con sombra)
     const wallX = PADDING + wall.x * CELL + 4;
     const wallY = PADDING + wall.y * CELL + 4;
     const wallSize = CELL - 8;
-
-    // Sombra
     ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
     ctx.fillRect(wallX + 2, wallY + 2, wallSize, wallSize);
-
-    // Pared principal
     ctx.fillStyle = "#8B7355";
     ctx.fillRect(wallX, wallY, wallSize, wallSize);
-
-    // Highlight superior
     ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
     ctx.fillRect(wallX, wallY, wallSize, wallSize * 0.2);
   }
 
-  // Meta con glow (verde brillante)
-  const goalX = PADDING + level.goal.x * CELL + CELL / 2;
-  const goalY = PADDING + level.goal.y * CELL + CELL / 2;
-  const goalRadius = CELL * 0.25;
+  // Actualizar frame de meta animada
+  if (now - lastGoalFrameTime >= GOAL_FRAME_INTERVAL_MS) {
+    goalFrame = (goalFrame + 1) % Math.max(1, goalSpriteFrames);
+    lastGoalFrameTime = now;
+  }
 
-  // Glow exterior
-  const glowGradient = ctx.createRadialGradient(goalX, goalY, 0, goalX, goalY, goalRadius * 2);
-  glowGradient.addColorStop(0, "rgba(16, 185, 129, 0.3)");
-  glowGradient.addColorStop(1, "rgba(16, 185, 129, 0)");
-  ctx.fillStyle = glowGradient;
-  ctx.beginPath();
-  ctx.arc(goalX, goalY, goalRadius * 2, 0, Math.PI * 2);
-  ctx.fill();
+  // Meta: usar sprite si está disponible
+  const goalCenterX = PADDING + level.goal.x * CELL + CELL / 2;
+  const goalCenterY = PADDING + level.goal.y * CELL + CELL / 2;
+  const gSprite = loadGoalSprite();
+  const useGoalSprite = gSprite && gSprite.complete && gSprite.naturalWidth > 0;
 
-  // Meta principal
-  ctx.fillStyle = "#10B981";
-  ctx.beginPath();
-  ctx.arc(goalX, goalY, goalRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Highlight en la meta
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.beginPath();
-  ctx.arc(goalX - goalRadius * 0.3, goalY - goalRadius * 0.3, goalRadius * 0.4, 0, Math.PI * 2);
-  ctx.fill();
+  if (useGoalSprite) {
+    const gw = gSprite!.naturalWidth;
+    const gh = gSprite!.naturalHeight;
+    const gFrames = goalSpriteFrames;
+    const gfw = gw / gFrames;
+    const gfh = gh;
+    const gFrameIdx = gFrames > 1 ? goalFrame : 0;
+    const gsx = gFrameIdx * gfw;
+    const gDrawSize = CELL * 0.9;
+    const gDrawH = (gfh / gfw) * gDrawSize;
+    ctx.drawImage(gSprite!, gsx, 0, gfw, gfh, goalCenterX - gDrawSize / 2, goalCenterY - gDrawH / 2, gDrawSize, gDrawH);
+  } else {
+    // Fallback: círculo verde con glow
+    const goalRadius = CELL * 0.25;
+    const glowGradient = ctx.createRadialGradient(goalCenterX, goalCenterY, 0, goalCenterX, goalCenterY, goalRadius * 2);
+    glowGradient.addColorStop(0, "rgba(16, 185, 129, 0.3)");
+    glowGradient.addColorStop(1, "rgba(16, 185, 129, 0)");
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(goalCenterX, goalCenterY, goalRadius * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#10B981";
+    ctx.beginPath();
+    ctx.arc(goalCenterX, goalCenterY, goalRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.beginPath();
+    ctx.arc(goalCenterX - goalRadius * 0.3, goalCenterY - goalRadius * 0.3, goalRadius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Usar estado de animación si existe, sino estado real
   const playerX = animationState
@@ -639,12 +733,17 @@ const drawMaze = (state: MazeState): void => {
   const playerDir = animationState ? animationState.playerDir : state.player.dir;
   const size = CELL * 0.6;
 
-  // Avanzar frame de caminar solo durante movimiento, según intervalo (no cada tick)
+  // Avanzar frame: walkFrame si está en movimiento, idleFrame si está quieto
   if (animationState) {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     if (now - lastWalkFrameTime >= WALK_FRAME_INTERVAL_MS) {
       walkFrame += 1;
       lastWalkFrameTime = now;
+    }
+  } else {
+    // Animación idle (2 frames, más lenta)
+    if (now - lastIdleFrameTime >= IDLE_FRAME_INTERVAL_MS) {
+      idleFrame = (idleFrame + 1) % 2;
+      lastIdleFrameTime = now;
     }
   }
 
@@ -659,7 +758,9 @@ const drawMaze = (state: MazeState): void => {
     const fh = h;
     const dirIndex = playerDir === "N" ? 0 : playerDir === "E" ? 1 : playerDir === "S" ? 2 : 3;
     const framesPerDir = n / 4;
-    const animFrame = framesPerDir > 1 ? (walkFrame % Math.floor(framesPerDir)) : 0;
+    // Usar walkFrame si se mueve, idleFrame si está quieto
+    const currentFrame = animationState ? walkFrame : idleFrame;
+    const animFrame = framesPerDir > 1 ? (currentFrame % Math.floor(framesPerDir)) : 0;
     const frameIndex = Math.min(dirIndex * Math.floor(framesPerDir) + animFrame, n - 1);
     const sx = frameIndex * fw;
     const drawW = CELL * 1.2;
@@ -904,6 +1005,12 @@ const adapter: RuntimeAdapter<MazeState> = {
         state.player.y = nextY;
         animationState = null;
 
+        // Registrar celda visitada
+        if (!state.visitedCells) state.visitedCells = [];
+        if (!state.visitedCells.some((c) => c.x === nextX && c.y === nextY)) {
+          state.visitedCells.push({ x: nextX, y: nextY });
+        }
+
         // Verificar si ganó
         if (state.player.x === level.goal.x && state.player.y === level.goal.y) {
           // Marcar nivel como completado
@@ -934,7 +1041,9 @@ const adapter: RuntimeAdapter<MazeState> = {
     return state;
   },
   reset: (state) => {
-    animationState = null; // Limpiar animación
+    animationState = null;
+    walkFrame = 0;
+    idleFrame = 0;
     const completedLevels = state.completedLevels ?? [];
     const next = makeInitialState(state.levelId, completedLevels);
     state.levelId = next.levelId;
@@ -942,6 +1051,7 @@ const adapter: RuntimeAdapter<MazeState> = {
     state.status = next.status;
     state.message = next.message;
     state.completedLevels = completedLevels;
+    state.visitedCells = next.visitedCells;
     drawMaze(state);
     return state;
   }
