@@ -373,8 +373,8 @@ function render(route: ReturnType<typeof getRoute>): void {
     return;
   }
 
-  appRoot.innerHTML = getGameLayoutHtml();
   const app = getAppById(route.gameId);
+  appRoot.innerHTML = getGameLayoutHtml(app?.blockType);
   if (app) {
     loadBlocklyScripts(app.blockType ?? "horizontal").then(
       () => initGameView(route.gameId),

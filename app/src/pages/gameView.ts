@@ -1,11 +1,56 @@
+export type BlockType = "horizontal" | "vertical";
+
 /**
- * HTML del layout de juego (toolbar + stage + editor).
+ * HTML del layout de juego. Para vertical: 3 columnas (bloques | canvas | maze).
  * Incluye botón Volver a la landing.
  */
+export function getGameLayoutHtml(blockType?: BlockType): string {
+  const isVertical = blockType === "vertical";
+  const layoutClass = isVertical ? "layout layout-vertical" : "layout";
 
-export function getGameLayoutHtml(): string {
+  if (isVertical) {
+    return `
+  <div class="${layoutClass}">
+    <div class="toolbar">
+      <a href="#/" id="btnBack" class="toolbar-btn toolbar-btn-back" title="Volver al inicio">
+        <span>← Volver</span>
+      </a>
+      <div class="toolbar-sep"></div>
+      <label for="game-select" class="toolbar-label">Juego</label>
+      <select id="game-select" class="game-select"></select>
+      <div class="toolbar-sep"></div>
+      <div id="level-bar" class="toolbar-level-bar"></div>
+      <div class="toolbar-spacer"></div>
+      <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
+        <span>Habilidades</span>
+      </button>
+    </div>
+
+    <div class="game-body-vertical">
+      <div class="blockly-editor-column">
+        <div class="blockly-wrapper-vertical">
+          <div id="blocklyArea" class="blocklyArea"></div>
+          <div id="blocklyDiv" class="blocklyDiv"></div>
+        </div>
+        <div id="instructions" class="instructions instructions-vertical">
+          <h3 class="instructions-title">Instrucciones disponibles</h3>
+          <div class="instructions-content">
+            <p class="instructions-placeholder">Las instrucciones se mostrarán aquí.</p>
+          </div>
+        </div>
+      </div>
+      <div class="stage-column-vertical">
+        <div id="game-stage" class="game-stage game-stage-vertical">
+          <div id="stage" class="stage"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+  }
+
   return `
-  <div class="layout">
+  <div class="${layoutClass}">
     <div class="toolbar">
       <a href="#/" id="btnBack" class="toolbar-btn toolbar-btn-back" title="Volver al inicio">
         <span>← Volver</span>
