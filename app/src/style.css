@@ -169,23 +169,25 @@ body {
   background-size: 200% 200%;
   animation: gradientShift 10s ease infinite;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
   position: relative;
   border-bottom: 1px solid var(--color-border);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .stage {
+  flex: 1;
   width: 100%;
-  max-width: 1200px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--color-text);
   font-size: 0.95rem;
-  padding: 20px;
+  padding: 12px;
   box-sizing: border-box;
   position: relative;
 }
@@ -232,12 +234,13 @@ body {
 .maze-stage {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  justify-content: center;
   position: relative;
   width: 100%;
-  max-width: 600px;
-  align-items: center;
-  margin: 0 auto;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
 }
 
 /* Botón Play/Restart grande en el stage */

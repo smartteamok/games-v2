@@ -40,8 +40,9 @@ type AnimationState = {
 
 const GAME_COLOR = "#4C97FF";
 const GAME_ICON_SIZE = 42;
-const CELL = 48;
-const PADDING = 12;
+const MIN_CELL = 12;
+const MAX_CELL = 128;
+const PADDING_RATIO = 0.25;
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -63,12 +64,25 @@ let animationState: AnimationState = null;
 let skillsPanel: HTMLElement | undefined = undefined;
 let skillsPanelOverlay: HTMLElement | undefined = undefined;
 
-// Sprite del personaje: se intenta cargar player-sprite-walking.png o player-sprite.png
-let playerSprite: HTMLImageElement | null = null;
-let playerSpriteFrames = 4; // 4 = solo direcciones; 8 = 2 frames por dirección
-let walkFrame = 0;
+let mazeContainerW = 0;
+let mazeContainerH = 0;
+let resizeObserver: ResizeObserver | null = null;
 
-const loadPlayerSprite = (): HTMLImageElement | null => {
+// Sprite del personaje: se intenta cargar player-sprite.png o player-sprite-walking.png
+let playerSprite: HTMLImageElement | null = null;
+let playerSpriteFrames = 4;
+let walkFrame = 0;
+let spriteLoadCallback: (() => void) | null = null;
+
+const loadPlayerSprite = (onLoaded?: () => void): HTMLImageElement | null => {
+  if (onLoaded) {
+    spriteLoadCallback = onLoaded;
+    if (playerSprite?.complete && playerSprite.naturalWidth > 0) {
+      const cb = spriteLoadCallback;
+      spriteLoadCallback = null;
+      cb();
+    }
+  }
   if (playerSprite) return playerSprite;
   playerSprite = new Image();
   const basicSrc = `${BASE_URL}game-sprites/player-sprite.png`;
@@ -84,16 +98,27 @@ const loadPlayerSprite = (): HTMLImageElement | null => {
     else playerSpriteFrames = 4;
   };
 
-  playerSprite.onload = detectFrames;
+  const runLoadCallback = () => {
+    detectFrames();
+    if (spriteLoadCallback) {
+      const cb = spriteLoadCallback;
+      spriteLoadCallback = null;
+      cb();
+    }
+  };
+
+  playerSprite.onload = runLoadCallback;
   playerSprite.onerror = () => {
     if (!playerSprite) return;
     playerSprite.onerror = null;
     playerSprite.src = walkingSrc;
   };
   playerSprite.src = basicSrc;
-  if (playerSprite.complete && playerSprite.naturalWidth > 0) detectFrames();
+  if (playerSprite.complete && playerSprite.naturalWidth > 0) runLoadCallback();
   return playerSprite;
 };
+
+loadPlayerSprite();
 
 const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
@@ -197,9 +222,28 @@ const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI
   const mazeUI: MazeUI = { rootEl, container, progressBar, canvas, ctx: canvasCtx, statusEl, skillsPanel, skillsPanelOverlay, stagePlayButton };
   ui = mazeUI;
   updateProgressBar(ctx.getState?.() as MazeState | undefined);
-  
-  loadPlayerSprite();
-  
+
+  const gameStage = document.getElementById("game-stage");
+  const scheduleRedraw = () => {
+    if (!ui?.container || !document.contains(ui.container)) return;
+    const state = (rootEl as any).__renderContext?.getState?.() as MazeState | undefined;
+    if (state) drawMaze(state);
+  };
+  if (gameStage) {
+    mazeContainerW = gameStage.clientWidth || gameStage.offsetWidth;
+    mazeContainerH = gameStage.clientHeight || gameStage.offsetHeight;
+    resizeObserver?.disconnect();
+    resizeObserver = new ResizeObserver(() => {
+      if (!gameStage) return;
+      mazeContainerW = gameStage.clientWidth || gameStage.offsetWidth;
+      mazeContainerH = gameStage.clientHeight || gameStage.offsetHeight;
+      scheduleRedraw();
+    });
+    resizeObserver.observe(gameStage);
+  }
+
+  loadPlayerSprite(() => scheduleRedraw());
+
   // Actualizar status en su nuevo contenedor
   if (statusEl) {
     const state = ctx.getState?.() as MazeState | undefined;
@@ -490,10 +534,16 @@ const updateProgressBar = (state?: MazeState): void => {
 };
 
 const drawMaze = (state: MazeState): void => {
-  if (!ui) {
-    return;
-  }
+  if (!ui) return;
   const level = getLevel(state.levelId);
+  const W = mazeContainerW > 0 ? mazeContainerW : level.gridW * 48 + 24;
+  const H = mazeContainerH > 0 ? mazeContainerH : level.gridH * 48 + 24;
+  const pad = Math.max(8, Math.min(W, H) * 0.04);
+  const cellByW = (W - pad * 2) / level.gridW;
+  const cellByH = (H - pad * 2) / level.gridH;
+  const rawCell = Math.floor(Math.min(cellByW, cellByH));
+  const CELL = rawCell > 0 ? Math.min(MAX_CELL, rawCell) : MIN_CELL;
+  const PADDING = Math.max(6, Math.round(CELL * PADDING_RATIO));
   const width = level.gridW * CELL + PADDING * 2;
   const height = level.gridH * CELL + PADDING * 2;
   if (ui.canvas.width !== width || ui.canvas.height !== height) {
