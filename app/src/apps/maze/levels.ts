@@ -44,9 +44,9 @@ export const levels: MazeLevel[] = [
     gridW: 5,
     gridH: 5,
     walls: [
-      { x: 2, y: 0 },
-      { x: 2, y: 1 },
-      { x: 2, y: 2 }
+      { x: 2, y: 0, type: "rock" },
+      { x: 2, y: 1, type: "tree" },
+      { x: 2, y: 2, type: "rock" }
     ],
     start: { x: 0, y: 0, dir: "E" },
     goal: { x: 4, y: 4 }
@@ -68,13 +68,13 @@ export const levels: MazeLevel[] = [
     gridW: 6,
     gridH: 6,
     walls: [
-      { x: 2, y: 0 },
-      { x: 2, y: 1 },
-      { x: 2, y: 2 },
-      { x: 2, y: 4 },
-      { x: 2, y: 5 },
-      { x: 4, y: 1 },
-      { x: 4, y: 2 }
+      { x: 2, y: 0, type: "tree" },
+      { x: 2, y: 1, type: "rock" },
+      { x: 2, y: 2, type: "tree" },
+      { x: 2, y: 4, type: "rock" },
+      { x: 2, y: 5, type: "tree" },
+      { x: 4, y: 1, type: "rock" },
+      { x: 4, y: 2, type: "tree" }
     ],
     start: { x: 0, y: 5, dir: "N" },
     goal: { x: 5, y: 0 }
@@ -85,11 +85,11 @@ export const levels: MazeLevel[] = [
     gridW: 6,
     gridH: 6,
     walls: [
-      { x: 0, y: 3 },
-      { x: 1, y: 3 },
-      { x: 2, y: 3 },
-      { x: 3, y: 3 },
-      { x: 4, y: 3 }
+      { x: 0, y: 3, type: "rock" },
+      { x: 1, y: 3, type: "rock" },
+      { x: 2, y: 3, type: "rock" },
+      { x: 3, y: 3, type: "rock" },
+      { x: 4, y: 3, type: "rock" }
     ],
     start: { x: 1, y: 5, dir: "N" },
     goal: { x: 5, y: 0 },
@@ -101,12 +101,12 @@ export const levels: MazeLevel[] = [
     gridW: 6,
     gridH: 6,
     walls: [
-      { x: 3, y: 1 },
-      { x: 3, y: 2 },
-      { x: 3, y: 3 },
-      { x: 3, y: 5 },
-      { x: 1, y: 4 },
-      { x: 2, y: 4 }
+      { x: 3, y: 1, type: "tree" },
+      { x: 3, y: 2, type: "tree" },
+      { x: 3, y: 3, type: "tree" },
+      { x: 3, y: 5, type: "tree" },
+      { x: 1, y: 4, type: "rock" },
+      { x: 2, y: 4, type: "rock" }
     ],
     start: { x: 5, y: 5, dir: "W" },
     goal: { x: 0, y: 0 }
@@ -117,18 +117,18 @@ export const levels: MazeLevel[] = [
     gridW: 6,
     gridH: 6,
     walls: [
-      { x: 1, y: 1 },
-      { x: 2, y: 1 },
-      { x: 3, y: 1 },
-      { x: 4, y: 1 },
-      { x: 1, y: 3 },
-      { x: 2, y: 3 },
-      { x: 3, y: 3 },
-      { x: 4, y: 3 },
-      { x: 1, y: 5 },
-      { x: 2, y: 5 },
-      { x: 3, y: 5 },
-      { x: 4, y: 5 }
+      { x: 1, y: 1, type: "tree" },
+      { x: 2, y: 1, type: "rock" },
+      { x: 3, y: 1, type: "tree" },
+      { x: 4, y: 1, type: "rock" },
+      { x: 1, y: 3, type: "rock" },
+      { x: 2, y: 3, type: "tree" },
+      { x: 3, y: 3, type: "rock" },
+      { x: 4, y: 3, type: "tree" },
+      { x: 1, y: 5, type: "tree" },
+      { x: 2, y: 5, type: "rock" },
+      { x: 3, y: 5, type: "tree" },
+      { x: 4, y: 5, type: "rock" }
     ],
     start: { x: 0, y: 0, dir: "E" },
     goal: { x: 5, y: 4 },

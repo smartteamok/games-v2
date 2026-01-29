@@ -422,7 +422,7 @@ const updateVerticalPlayButtonState = (button: HTMLButtonElement, state: "play" 
   }
 };
 
-// Función para contar bloques en el workspace (excluyendo el bloque inicial)
+// Función para contar bloques en el workspace (excluyendo el bloque inicial y shadow blocks)
 const countBlocks = (workspace: any): number => {
   if (!workspace || !workspace.getTopBlocks) return 0;
   
@@ -434,7 +434,14 @@ const countBlocks = (workspace: any): number => {
     if (block.type === "event_whenflagclicked") {
       continue;
     }
-    // Contar todos los demás bloques, incluyendo shadow blocks
+    // Excluir shadow blocks (bloques de input numérico que vienen con otros bloques)
+    if (block.isShadow?.()) {
+      continue;
+    }
+    // Excluir bloques de tipo math_ (inputs numéricos)
+    if (block.type?.startsWith("math_")) {
+      continue;
+    }
     count += 1;
   }
   
