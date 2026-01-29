@@ -17,6 +17,8 @@ export type MazeLevel = {
   goal: { x: number; y: number };
   constraints?: { maxBlocks?: number; mustUseRepeat?: boolean };
   blockLimit?: number;
+  /** Imagen de fondo del canvas. Ruta relativa a public/game-sprites/backgrounds/ (ej: "level1.png"). */
+  backgroundImage?: string;
 };
 
 export const levels: MazeLevel[] = [

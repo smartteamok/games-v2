@@ -47,6 +47,7 @@ const PADDING_RATIO = 0.25;
 
 const BASE_URL = import.meta.env.BASE_URL;
 
+/** Iconos de bloques horizontales; carpeta distinta a verticales. Ver app/public/BLOCK_ICONS.md */
 const ICON_MOVE = `${BASE_URL}game-icons/move-right.svg`;
 const ICON_BACK = `${BASE_URL}game-icons/move-left.svg`;
 const ICON_TURN_LEFT = `${BASE_URL}game-icons/turn-left.svg`;
@@ -170,6 +171,17 @@ const loadGoalSprite = (): HTMLImageElement | null => {
 
 loadGoalSprite();
 
+/** Imágenes de fondo del maze. Ruta: public/game-sprites/backgrounds/{filename} */
+const mazeBackgroundImages: Map<string, HTMLImageElement> = new Map();
+
+const loadMazeBackgroundImage = (filename: string): HTMLImageElement | null => {
+  if (mazeBackgroundImages.has(filename)) return mazeBackgroundImages.get(filename) ?? null;
+  const img = new Image();
+  img.src = `${BASE_URL}game-sprites/backgrounds/${filename}`;
+  mazeBackgroundImages.set(filename, img);
+  return img;
+};
+
 /** Precarga sprites de obstáculos usados en los niveles para que estén listos al inicio. */
 const preloadObstacleSprites = (): void => {
   const types = new Set<string>();
@@ -181,6 +193,14 @@ const preloadObstacleSprites = (): void => {
   for (const t of types) loadObstacleSprite(t);
 };
 preloadObstacleSprites();
+
+/** Precarga imágenes de fondo de niveles que las definan. */
+const preloadMazeBackgrounds = (): void => {
+  for (const level of levels) {
+    if (level.backgroundImage) loadMazeBackgroundImage(level.backgroundImage);
+  }
+};
+preloadMazeBackgrounds();
 
 export const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
@@ -424,13 +444,13 @@ const updateVerticalPlayButtonState = (button: HTMLButtonElement, state: "play" 
   button.setAttribute("data-state", state);
   button.disabled = state === "disabled";
   if (state === "play") {
-    button.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>`;
+    button.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>`;
     button.setAttribute("aria-label", "Ejecutar programa");
   } else if (state === "restart") {
-    button.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/></svg>`;
+    button.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/></svg>`;
     button.setAttribute("aria-label", "Reiniciar y ejecutar");
   } else {
-    button.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>`;
+    button.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>`;
     button.setAttribute("aria-label", "Ejecutando...");
   }
 };
@@ -669,12 +689,33 @@ export const drawMaze = (state: MazeState): void => {
   const ctx = ui.ctx;
   ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
 
-  // Fondo con gradiente sutil
-  const bgGradient = ctx.createLinearGradient(0, 0, ui.canvas.width, ui.canvas.height);
-  bgGradient.addColorStop(0, "#FFFFFF");
-  bgGradient.addColorStop(1, "#FAFAFA");
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, ui.canvas.width, ui.canvas.height);
+  const cw = ui.canvas.width;
+  const ch = ui.canvas.height;
+
+  let usedBgImage = false;
+  if (level.backgroundImage) {
+    const bgImg = loadMazeBackgroundImage(level.backgroundImage);
+    if (bgImg?.complete && bgImg.naturalWidth > 0) {
+      const iw = bgImg.naturalWidth;
+      const ih = bgImg.naturalHeight;
+      const r = Math.max(cw / iw, ch / ih);
+      const sw = iw * r;
+      const sh = ih * r;
+      const sx = (sw - cw) / 2;
+      const sy = (sh - ch) / 2;
+      ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, cw, ch);
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.fillRect(0, 0, cw, ch);
+      usedBgImage = true;
+    }
+  }
+  if (!usedBgImage) {
+    const bgGradient = ctx.createLinearGradient(0, 0, cw, ch);
+    bgGradient.addColorStop(0, "#FFFFFF");
+    bgGradient.addColorStop(1, "#FAFAFA");
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, cw, ch);
+  }
 
   // Dibujar celdas visitadas con color más fuerte (camino recorrido)
   const visited = state.visitedCells ?? [];

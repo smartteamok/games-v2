@@ -62,6 +62,8 @@ body {
   height: 100%;
   width: 100%;
   box-sizing: border-box;
+  /* Fondo gris claro semitransparente en la paleta (columna izquierda) para diferenciar del canvas */
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.06) 220px, transparent 220px);
 }
 
 /* Workspace (canvas) en columna 2; toolbox (flyout) en columna 1 — orden DOM: svg workspace, luego flyout */
@@ -90,12 +92,12 @@ body {
 
 .layout-vertical .stage-play-button-vertical {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   background: #9333EA;
   border: none;
-  box-shadow: 0 3px 8px rgba(147, 51, 234, 0.35);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -105,8 +107,8 @@ body {
 }
 
 .layout-vertical .stage-play-button-vertical:hover:not(:disabled) {
-  transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.3);
   background: #7C3AED;
 }
 
@@ -122,11 +124,12 @@ body {
 
 .layout-vertical .stage-play-button-vertical[data-state="restart"] {
   background: #F59E0B;
-  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.2);
 }
 
 .layout-vertical .stage-play-button-vertical[data-state="restart"]:hover:not(:disabled) {
   background: #D97706;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .layout-vertical .instructions-vertical {
@@ -222,6 +225,11 @@ body {
   height: 100%;
 }
 
+/* Fondo gris semitransparente en la paleta (flyout) para diferenciarla del canvas — horizontal (toolbox a la derecha) */
+.editor-container .blocklyDiv .injectionDiv {
+  background: linear-gradient(to right, transparent 0%, transparent calc(100% - 220px), rgba(0, 0, 0, 0.06) calc(100% - 220px), rgba(0, 0, 0, 0.06) 100%);
+}
+
 .toolbar {
   display: flex;
   gap: 12px;
@@ -231,6 +239,25 @@ body {
   background: var(--color-bg);
   box-shadow: var(--shadow-sm);
   flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.toolbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .toolbar-label {
@@ -273,11 +300,7 @@ body {
   gap: 6px;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.toolbar-spacer {
-  flex: 1;
-  min-width: 12px;
+  justify-content: center;
 }
 
 .toolbar-btn {

@@ -18,14 +18,31 @@ import type { MazeState } from "../maze/mazeApp";
 const GAME_COLOR = "#4C97FF";
 const BASE_URL = import.meta.env.BASE_URL;
 const pathToMedia = `${BASE_URL}vendor/scratch-blocks/media/`;
-const pathToIcons = `${BASE_URL}game-icons/`;
+/** Iconos de bloques verticales; carpeta distinta a horizontales. Ver app/public/BLOCK_ICONS.md */
+const pathToIconsVertical = `${BASE_URL}game-icons-vertical/`;
+
 export const registerVerticalMazeBlocks = (Blockly: any): void => {
+  Blockly.Blocks["event_inicio"] = {
+    init: function () {
+      this.jsonInit({
+        message0: "%1 Inicio",
+        args0: [
+          { type: "field_image", src: pathToIconsVertical + "play-green.svg", width: 24, height: 24, alt: "Inicio" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: "#4CBF56",
+        tooltip: "Inicio del programa"
+      });
+    }
+  };
+
   Blockly.Blocks["v_game_move"] = {
     init: function () {
       this.jsonInit({
         message0: "%1 Mover",
         args0: [
-          { type: "field_image", src: pathToIcons + "move-right.svg", width: 24, height: 24, alt: "Mover" }
+          { type: "field_image", src: pathToIconsVertical + "move-right.svg", width: 24, height: 24, alt: "Mover" }
         ],
         previousStatement: null,
         nextStatement: null,
@@ -40,7 +57,7 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
       this.jsonInit({
         message0: "%1 Atrás",
         args0: [
-          { type: "field_image", src: pathToIcons + "move-left.svg", width: 24, height: 24, alt: "Atrás" }
+          { type: "field_image", src: pathToIconsVertical + "move-left.svg", width: 24, height: 24, alt: "Atrás" }
         ],
         previousStatement: null,
         nextStatement: null,
@@ -55,7 +72,7 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
       this.jsonInit({
         message0: "%1 Girar izquierda",
         args0: [
-          { type: "field_image", src: pathToIcons + "turn-left.svg", width: 24, height: 24, alt: "Girar izquierda" }
+          { type: "field_image", src: pathToIconsVertical + "turn-left.svg", width: 24, height: 24, alt: "Girar izquierda" }
         ],
         previousStatement: null,
         nextStatement: null,
@@ -70,7 +87,7 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
       this.jsonInit({
         message0: "%1 Girar derecha",
         args0: [
-          { type: "field_image", src: pathToIcons + "turn-right.svg", width: 24, height: 24, alt: "Girar derecha" }
+          { type: "field_image", src: pathToIconsVertical + "turn-right.svg", width: 24, height: 24, alt: "Girar derecha" }
         ],
         previousStatement: null,
         nextStatement: null,

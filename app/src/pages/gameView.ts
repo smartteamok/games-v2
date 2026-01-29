@@ -12,18 +12,22 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
     return `
   <div class="${layoutClass}">
     <div class="toolbar">
-      <a href="#/" id="btnBack" class="toolbar-btn toolbar-btn-back" title="Volver al inicio">
-        <span>← Volver</span>
-      </a>
-      <div class="toolbar-sep"></div>
-      <label for="game-select" class="toolbar-label">Juego</label>
-      <select id="game-select" class="game-select"></select>
-      <div class="toolbar-sep"></div>
-      <div id="level-bar" class="toolbar-level-bar"></div>
-      <div class="toolbar-spacer"></div>
-      <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
-        <span>Habilidades</span>
-      </button>
+      <div class="toolbar-left">
+        <a href="#/" id="btnBack" class="toolbar-btn toolbar-btn-back" title="Volver al inicio">
+          <span>← Volver</span>
+        </a>
+        <div class="toolbar-sep"></div>
+        <label for="game-select" class="toolbar-label">Juego</label>
+        <select id="game-select" class="game-select"></select>
+      </div>
+      <div class="toolbar-center">
+        <div id="level-bar" class="toolbar-level-bar"></div>
+      </div>
+      <div class="toolbar-right">
+        <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
+          <span>Habilidades</span>
+        </button>
+      </div>
     </div>
 
     <div class="game-body-vertical">
@@ -34,7 +38,7 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
         </div>
         <div class="controls-bar-vertical">
           <button id="stage-play-btn-vertical" class="stage-play-button-vertical" data-state="play" aria-label="Ejecutar programa">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>
           </button>
           <div id="instructions" class="instructions instructions-vertical">
             <div class="instructions-content">
@@ -57,18 +61,22 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
   return `
   <div class="${layoutClass}">
     <div class="toolbar">
-      <a href="#/" id="btnBack" class="toolbar-btn toolbar-btn-back" title="Volver al inicio">
-        <span>← Volver</span>
-      </a>
-      <div class="toolbar-sep"></div>
-      <label for="game-select" class="toolbar-label">Juego</label>
-      <select id="game-select" class="game-select"></select>
-      <div class="toolbar-sep"></div>
-      <div id="level-bar" class="toolbar-level-bar"></div>
-      <div class="toolbar-spacer"></div>
-      <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
-        <span>Habilidades</span>
-      </button>
+      <div class="toolbar-left">
+        <a href="#/" id="btnBack" class="toolbar-btn toolbar-btn-back" title="Volver al inicio">
+          <span>← Volver</span>
+        </a>
+        <div class="toolbar-sep"></div>
+        <label for="game-select" class="toolbar-label">Juego</label>
+        <select id="game-select" class="game-select"></select>
+      </div>
+      <div class="toolbar-center">
+        <div id="level-bar" class="toolbar-level-bar"></div>
+      </div>
+      <div class="toolbar-right">
+        <button id="btnSkills" class="toolbar-btn toolbar-btn-skills" title="Ver habilidades">
+          <span>Habilidades</span>
+        </button>
+      </div>
     </div>
 
     <div id="game-stage" class="game-stage">
