@@ -10,7 +10,7 @@ import { animateMoveAsync, animateTurnAsync } from "./animation";
 
 type MazeStatus = "idle" | "running" | "win" | "error";
 
-type MazeState = {
+export type MazeState = {
   levelId: number;
   player: { x: number; y: number; dir: Direction };
   status: MazeStatus;
@@ -169,10 +169,10 @@ const loadGoalSprite = (): HTMLImageElement | null => {
 
 loadGoalSprite();
 
-const getLevel = (levelId: number): MazeLevel =>
+export const getLevel = (levelId: number): MazeLevel =>
   levels.find((level) => level.id === levelId) ?? levels[0];
 
-const makeInitialState = (levelId: number, completedLevels: number[] = []): MazeState => {
+export const makeInitialState = (levelId: number, completedLevels: number[] = []): MazeState => {
   const level = getLevel(levelId);
   return {
     levelId: level.id,
@@ -216,7 +216,7 @@ const updateStatusText = (state: MazeState): string => {
   }
 };
 
-const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI => {
+export const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI => {
   if (ui && ui.rootEl === rootEl && rootEl.contains(ui.container)) {
     return ui;
   }
@@ -531,7 +531,7 @@ export const toggleSkillsPanel = (): void => {
   }
 };
 
-const updateProgressBar = (state?: MazeState): void => {
+export const updateProgressBar = (state?: MazeState): void => {
   if (!ui) return;
 
   const currentLevelId = state?.levelId ?? 1;
@@ -583,7 +583,7 @@ const updateProgressBar = (state?: MazeState): void => {
   }
 };
 
-const drawMaze = (state: MazeState): void => {
+export const drawMaze = (state: MazeState): void => {
   if (!ui) return;
   const level = getLevel(state.levelId);
   const W = mazeContainerW > 0 ? mazeContainerW : level.gridW * 48 + 24;
@@ -938,7 +938,7 @@ export const MAZE_LIKE_TOOLBOX_XML = `
 </xml>
 `;
 
-const adapter: RuntimeAdapter<MazeState> = {
+export const adapter: RuntimeAdapter<MazeState> = {
   applyOp: async (op, state) => {
     const level = getLevel(state.levelId);
     if (state.status === "win" || state.status === "error") {
@@ -1057,7 +1057,11 @@ const adapter: RuntimeAdapter<MazeState> = {
   }
 };
 
-const checkConstraints = (workspace: unknown, state: MazeState): ConstraintResult => {
+/** Factory para checkConstraints del laberinto; permite usar otro tipo de bloque "repetir" (ej. v_game_repeat). */
+export const createMazeCheckConstraints = (repeatBlockType: string) => (
+  workspace: unknown,
+  state: MazeState
+): ConstraintResult => {
   const level = getLevel(state.levelId);
   const constraints = level.constraints;
   if (!constraints) {
@@ -1077,13 +1081,15 @@ const checkConstraints = (workspace: unknown, state: MazeState): ConstraintResul
     return { ok: false, message: `Usá máximo ${constraints.maxBlocks} bloques.` };
   }
   if (constraints.mustUseRepeat) {
-    const hasRepeat = blockTypes.some((type) => type === "game_repeat");
+    const hasRepeat = blockTypes.some((type) => type === repeatBlockType);
     if (!hasRepeat) {
       return { ok: false, message: "Tenés que usar un bloque de repetir." };
     }
   }
   return { ok: true };
 };
+
+const checkConstraints = createMazeCheckConstraints("game_repeat");
 
 const levelInfos: LevelInfo[] = levels.map((l) => ({ id: l.id, title: l.title, blockLimit: l.blockLimit }));
 

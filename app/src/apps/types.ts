@@ -15,9 +15,13 @@ export type ConstraintResult = { ok: true } | { ok: false; message: string };
 /** Level metadata for games that have multiple levels (e.g. maze). */
 export type LevelInfo = { id: number; title: string; blockLimit?: number };
 
+export type BlockType = "horizontal" | "vertical";
+
 export type AppDefinition<AppState> = {
   id: string;
   title: string;
+  /** Horizontal (icon strip) or vertical (Scratch-style). Default "horizontal". */
+  blockType?: BlockType;
   /** Optional: levels for this game. Used by UI (e.g. level selector in stage). */
   levels?: LevelInfo[];
   toolboxXml: string;

@@ -16,6 +16,7 @@ import { getGameLayoutHtml, showComingSoon } from "./pages/gameView";
 
 const BASE_URL = import.meta.env.BASE_URL;
 const LAST_GAME_KEY = "game-blocks-last-game";
+const BLOCKLY_BUNDLE_ATTR = "data-blockly-bundle";
 
 const appRoot = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -25,14 +26,66 @@ let currentApp: AppDefinition<unknown> | null = null;
 let appState: unknown = null;
 let runtimeController: RuntimeController | null = null;
 
-const WORKSPACE_OPTS = {
-  horizontalLayout: true,
-  toolboxPosition: "end" as const,
-  mediaPath: `${BASE_URL}vendor/scratch-blocks/media/`,
-  trashcan: true,
-  scrollbars: true,
-  fixedStartBlock: { type: "event_whenflagclicked", x: 40, y: 30 }
-};
+/** Tipo de Blockly actualmente cargado (horizontal o vertical). */
+let loadedBlockType: "horizontal" | "vertical" | null = null;
+
+const SCRIPTS_BY_TYPE = {
+  horizontal: [
+    "vendor/scratch-blocks/blockly_compressed_horizontal.js",
+    "vendor/scratch-blocks/blocks_compressed.js",
+    "vendor/scratch-blocks/blocks_compressed_horizontal.js",
+    "vendor/scratch-blocks/msg/js/en.js"
+  ],
+  vertical: [
+    "vendor/scratch-blocks/blockly_compressed_vertical.js",
+    "vendor/scratch-blocks/blocks_compressed.js",
+    "vendor/scratch-blocks/blocks_compressed_vertical.js",
+    "vendor/scratch-blocks/msg/js/en.js"
+  ]
+} as const;
+
+/**
+ * Carga el bundle de Blockly (horizontal o vertical). Si ya está cargado el mismo tipo, resuelve de inmediato.
+ * Si se pide otro tipo, reemplaza los scripts y recarga en secuencia.
+ */
+function loadBlocklyScripts(blockType: "horizontal" | "vertical"): Promise<void> {
+  const base = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+  if (loadedBlockType === blockType) {
+    return Promise.resolve();
+  }
+  document.querySelectorAll(`script[${BLOCKLY_BUNDLE_ATTR}]`).forEach((el) => el.remove());
+  loadedBlockType = null;
+  (window as any).Blockly = undefined;
+
+  const paths = SCRIPTS_BY_TYPE[blockType];
+  function loadOne(index: number): Promise<void> {
+    if (index >= paths.length) {
+      loadedBlockType = blockType;
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.setAttribute(BLOCKLY_BUNDLE_ATTR, blockType);
+      script.src = base + paths[index];
+      script.onload = () => loadOne(index + 1).then(resolve, reject);
+      script.onerror = () => reject(new Error(`Error cargando Blockly: ${paths[index]}`));
+      document.body.appendChild(script);
+    });
+  }
+  return loadOne(0);
+}
+
+function getWorkspaceOpts(app: AppDefinition<unknown>) {
+  const blockType = app.blockType ?? "horizontal";
+  return {
+    horizontalLayout: blockType === "horizontal",
+    toolboxPosition: (blockType === "vertical" ? "start" : "end") as "start" | "end",
+    mediaPath: `${BASE_URL}vendor/scratch-blocks/media/`,
+    trashcan: true,
+    scrollbars: true,
+    fixedStartBlock: { type: "event_whenflagclicked", x: 40, y: 30 }
+  };
+}
 
 function teardownGameView(): void {
   window.removeEventListener("blockly-workspace-changed", refreshBlockLimit);
@@ -95,7 +148,7 @@ function initGameView(gameId: string): void {
   apps.forEach((a) => a.registerBlocks(Blockly));
 
   currentApp = app;
-  workspace = createWorkspace(Blockly, blocklyDiv, app.toolboxXml, WORKSPACE_OPTS);
+  workspace = createWorkspace(Blockly, blocklyDiv, app.toolboxXml, getWorkspaceOpts(app));
   appState = app.createInitialState();
 
   const project = loadProject(app.id);
@@ -321,8 +374,15 @@ function render(route: ReturnType<typeof getRoute>): void {
   }
 
   appRoot.innerHTML = getGameLayoutHtml();
-  if (getAppById(route.gameId)) {
-    initGameView(route.gameId);
+  const app = getAppById(route.gameId);
+  if (app) {
+    loadBlocklyScripts(app.blockType ?? "horizontal").then(
+      () => initGameView(route.gameId),
+      (err) => {
+        console.error(err);
+        setStatus("Error al cargar Blockly");
+      }
+    );
   } else {
     showComingSoon(appRoot);
   }

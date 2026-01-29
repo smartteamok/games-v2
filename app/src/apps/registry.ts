@@ -1,8 +1,13 @@
 import { mazeApp } from "./maze/mazeApp";
+import { mazeVerticalApp } from "./maze-vertical/mazeVerticalApp";
 import { practiceApp } from "./practice/practiceApp";
 import type { AppDefinition } from "./types";
 
-export const apps: AppDefinition<unknown>[] = [mazeApp, practiceApp] as AppDefinition<unknown>[];
+export const apps: AppDefinition<unknown>[] = [
+  mazeApp,
+  mazeVerticalApp,
+  practiceApp
+] as AppDefinition<unknown>[];
 
 export const getDefaultApp = (): AppDefinition<unknown> => apps[0];
 

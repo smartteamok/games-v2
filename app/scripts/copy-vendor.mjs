@@ -23,6 +23,16 @@ await cp(
   join(vendorRoot, "blocks_compressed_horizontal.js"),
   { force: true }
 );
+await cp(
+  join(srcRoot, "blockly_compressed_vertical.js"),
+  join(vendorRoot, "blockly_compressed_vertical.js"),
+  { force: true }
+);
+await cp(
+  join(srcRoot, "blocks_compressed_vertical.js"),
+  join(vendorRoot, "blocks_compressed_vertical.js"),
+  { force: true }
+);
 await mkdir(join(vendorRoot, "msg", "js"), { recursive: true });
 await cp(join(srcRoot, "msg", "js", "en.js"), join(vendorRoot, "msg", "js", "en.js"), {
   force: true

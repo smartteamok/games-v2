@@ -55,10 +55,21 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     imageUrl: `${BASE_URL}landing/placeholder.svg`,
     comingSoon: true
   })),
-  // Juegos 11–20: verticales, próximamente
-  ...Array.from({ length: 10 }, (_, i) => ({
-    id: `game-${i + 11}`,
-    title: `Juego ${i + 11}`,
+  // Juego 11: Laberinto vertical (playable)
+  {
+    id: "maze-vertical",
+    title: "Laberinto (vertical)",
+    description: "El mismo laberinto con bloques verticales estilo Scratch.",
+    blockType: "vertical",
+    programmingType: "Bloques verticales",
+    levelsCount: 8,
+    imageUrl: `${BASE_URL}landing/maze.svg`,
+    comingSoon: false
+  },
+  // Juegos 12–20: verticales, próximamente
+  ...Array.from({ length: 9 }, (_, i) => ({
+    id: `game-${i + 12}`,
+    title: `Juego ${i + 12}`,
     description: "Descripción del juego próximamente.",
     blockType: "vertical" as BlockType,
     programmingType: "Bloques verticales",
