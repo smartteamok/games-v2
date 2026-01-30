@@ -1,11 +1,9 @@
 // src/main.ts
 import "./style.css";
 import { createWorkspace, destroyWorkspace } from "./core/editor/workspace";
-import { loadXmlTextIntoWorkspace } from "./core/editor/serialization";
 import { compileWorkspaceToAst } from "./core/compiler/compile";
 import { validateProgram } from "./core/compiler/validate";
 import { runProgram, type RuntimeController } from "./core/runtime/runtime";
-import { loadProject } from "./core/storage/projectStore";
 import { apps, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
@@ -167,19 +165,10 @@ function initGameView(gameId: string): void {
   workspace = createWorkspace(Blockly, blocklyDiv, app.toolboxXml, getWorkspaceOpts(app));
   appState = app.createInitialState();
 
-  const project = loadProject(app.id);
-  if (project && project.appId === app.id) {
-    loadXmlTextIntoWorkspace(Blockly, workspace as { clear?: () => void }, project.workspaceXml);
-    appState = app.deserializeState
-      ? app.deserializeState(project.appState)
-      : (project.appState as unknown);
-    setStatus(`Cargado ${app.title} ✅`);
-  } else {
-    const level = getLevel(1);
-    const blockType = (app as { blockType?: "horizontal" | "vertical" })?.blockType ?? "horizontal";
-    applyInitialBlocks(Blockly, workspace, level, blockType);
-    setStatus(`${app.title} listo`);
-  }
+  const level = getLevel(1);
+  const blockType = (app as { blockType?: "horizontal" | "vertical" })?.blockType ?? "horizontal";
+  applyInitialBlocks(Blockly, workspace, level, blockType);
+  setStatus(`${app.title} listo`);
 
   gameSelect.innerHTML = "";
   apps.forEach((a) => {

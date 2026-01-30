@@ -31,34 +31,69 @@ type WorkspaceLike = {
   isDragging?: () => boolean;
 };
 
+const LEGACY_START_TYPE = "event_whenflagclicked";
+
 const ensureFixedStartBlock = (
   workspace: WorkspaceLike,
   fixed: { type: string; x: number; y: number }
 ): void => {
-  const topBlocks = workspace.getTopBlocks(true);
-  const startBlocks = topBlocks.filter((block) => block.type === fixed.type);
+  let topBlocks = workspace.getTopBlocks(true);
+
+  if (fixed.type === "event_inicio") {
+    const legacy = topBlocks.filter((b: any) => b.type === LEGACY_START_TYPE);
+    for (const old of legacy) {
+      const nextBlock =
+        (old as any).getNextBlock?.() ??
+        (old as any).nextConnection?.targetBlock?.();
+      if (nextBlock?.previousConnection?.disconnect) {
+        try {
+          (nextBlock as any).previousConnection.disconnect();
+        } catch (_) {}
+      }
+      let primary = topBlocks.find((b: any) => b.type === fixed.type);
+      if (!primary) {
+        primary = workspace.newBlock(fixed.type) as any;
+        primary?.initSvg?.();
+        primary?.render?.();
+        topBlocks = workspace.getTopBlocks(true);
+      }
+      if (nextBlock && primary?.nextConnection) {
+        try {
+          (primary as any).nextConnection.connect(
+            (nextBlock as any).previousConnection
+          );
+        } catch (_) {}
+      }
+      (old as any).dispose?.(false);
+    }
+    topBlocks = workspace.getTopBlocks(true);
+  }
+
+  const startBlocks = topBlocks.filter((block: any) => block.type === fixed.type);
   let primary = startBlocks[0];
 
   if (!primary) {
-    primary = workspace.newBlock(fixed.type);
-    primary.initSvg?.();
-    primary.render?.();
+    primary = workspace.newBlock(fixed.type) as any;
+    primary?.initSvg?.();
+    primary?.render?.();
   }
 
-  const pos = primary.getRelativeToSurfaceXY?.();
-  if (pos && (pos.x !== fixed.x || pos.y !== fixed.y)) {
+  const pos = primary?.getRelativeToSurfaceXY?.();
+  if (pos && primary && (pos.x !== fixed.x || pos.y !== fixed.y)) {
     primary.moveBy?.(fixed.x - pos.x, fixed.y - pos.y);
-  } else if (!pos) {
+  } else if (!pos && primary) {
     primary.moveBy?.(fixed.x, fixed.y);
   }
 
-  primary.setDeletable?.(false);
-  primary.setMovable?.(false);
-  primary.setEditable?.(false);
+  if (primary) {
+    primary.setDeletable?.(false);
+    primary.setMovable?.(false);
+    primary.setEditable?.(false);
+  }
 
   if (startBlocks.length > 1) {
     for (const extra of startBlocks.slice(1)) {
-      extra.dispose?.(false);
+      (extra as any).dispose?.(false);
     }
   }
 };
