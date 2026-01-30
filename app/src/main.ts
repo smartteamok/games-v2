@@ -83,14 +83,13 @@ function loadBlocklyScripts(blockType: "horizontal" | "vertical"): Promise<void>
 
 function getWorkspaceOpts(app: AppDefinition<unknown>) {
   const blockType = app.blockType ?? "horizontal";
-  const startType = blockType === "vertical" ? "event_inicio" : "event_whenflagclicked";
   return {
     horizontalLayout: blockType === "horizontal",
     toolboxPosition: (blockType === "vertical" ? "start" : "end") as "start" | "end",
     mediaPath: `${BASE_URL}vendor/scratch-blocks/media/`,
     trashcan: true,
     scrollbars: true,
-    fixedStartBlock: { type: startType, x: 40, y: 30 }
+    fixedStartBlock: { type: "event_inicio", x: 40, y: 30 }
   };
 }
 

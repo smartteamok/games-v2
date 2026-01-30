@@ -29,10 +29,9 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
         args0: [
           { type: "field_image", src: pathToIconsVertical + "play-green.svg", width: 24, height: 24, alt: "Inicio" }
         ],
-        previousStatement: null,
-        nextStatement: null,
         colour: "#EECE1C",
-        tooltip: "Inicio del programa"
+        tooltip: "Inicio del programa",
+        extensions: ["shape_hat"]
       });
     }
   };

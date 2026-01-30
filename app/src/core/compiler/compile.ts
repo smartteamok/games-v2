@@ -14,8 +14,16 @@ type BlockLike = {
   id: string;
   type: string;
   getNextBlock?: () => BlockLike | null;
+  nextConnection?: { targetBlock?: () => BlockLike | null };
   getInputTargetBlock?: (name: string) => BlockLike | null;
   getFieldValue?: (name: string) => string | number | null | undefined;
+};
+
+const getNextBlock = (block: BlockLike | null | undefined): BlockLike | null | undefined => {
+  if (!block) return undefined;
+  const next = block.getNextBlock?.();
+  if (next !== undefined && next !== null) return next;
+  return block.nextConnection?.targetBlock?.() ?? undefined;
 };
 
 const FALLBACK_NUMBER_KEYS = ["NUM", "N", "VALUE", "TIMES", "DURATION", "STEPS", "SECS", "MS"];
@@ -78,7 +86,7 @@ export const compileWorkspaceToAst = (
     let current: BlockLike | null | undefined = first;
     while (current) {
       ops.push(compileBlock(current));
-      current = current.getNextBlock?.();
+      current = getNextBlock(current);
     }
     return ops;
   };

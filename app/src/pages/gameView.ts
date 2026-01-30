@@ -38,7 +38,7 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
         </div>
         <div class="controls-bar-vertical">
           <button id="stage-play-btn-vertical" class="stage-play-button-vertical" data-state="play" aria-label="Ejecutar programa">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>
           </button>
           <div id="instructions" class="instructions instructions-vertical">
             <div class="instructions-content">

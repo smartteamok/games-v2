@@ -52,6 +52,7 @@ const ICON_MOVE = `${BASE_URL}game-icons/move-right.svg`;
 const ICON_BACK = `${BASE_URL}game-icons/move-left.svg`;
 const ICON_TURN_LEFT = `${BASE_URL}game-icons/turn-left.svg`;
 const ICON_TURN_RIGHT = `${BASE_URL}game-icons/turn-right.svg`;
+const ICON_INICIO = `${BASE_URL}icons/play-green.svg`;
 
 const DIR_ORDER: Direction[] = ["N", "E", "S", "W"];
 const DIR_DELTAS: Record<Direction, { x: number; y: number }> = {
@@ -220,7 +221,7 @@ export const applyInitialBlocks = (
   if (!xmlStr || !xmlStr.trim()) return;
   const Xml = Blockly.Xml;
   if (!Xml?.textToDom || !Xml?.domToWorkspace) return;
-  const startType = blockType === "vertical" ? "event_inicio" : "event_whenflagclicked";
+  const startType = "event_inicio";
   let dom: Element;
   try {
     dom = Xml.textToDom(xmlStr.trim().startsWith("<") ? xmlStr : `<xml>${xmlStr}</xml>`);
@@ -487,7 +488,7 @@ const updateVerticalPlayButtonState = (button: HTMLButtonElement, state: "play" 
   button.setAttribute("data-state", state);
   button.disabled = state === "disabled";
   if (state === "play") {
-    button.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>`;
+    button.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>`;
     button.setAttribute("aria-label", "Ejecutar programa");
   } else if (state === "restart") {
     button.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/></svg>`;
@@ -555,8 +556,7 @@ export const updateBlockLimitCounter = (workspace: unknown, levelId: number): vo
   if (exceeded) {
     instructionsContent.innerHTML = `
       <div class="block-limit-counter block-limit-exceeded">
-        <span class="block-limit-exclaim">¡</span>
-        <span class="block-limit-exceeded-msg">Cantidad de bloques superada</span>
+        <span class="block-limit-exceeded-msg">¡Cantidad de bloques superada!</span>
       </div>
     `;
   } else {
@@ -957,6 +957,19 @@ export const drawMaze = (state: MazeState): void => {
 };
 
 export const registerMazeLikeBlocks = (Blockly: any) => {
+  Blockly.Blocks["event_inicio"] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField(new Blockly.FieldImage(ICON_INICIO, GAME_ICON_SIZE, GAME_ICON_SIZE, "Inicio"))
+        .appendField("Inicio");
+      this.setPreviousStatement(null);
+      this.setNextStatement(true);
+      this.setInputsInline(true);
+      this.setTooltip("Inicio del programa");
+      this.setColour("#4CBF56");
+    }
+  };
+
   Blockly.Blocks["game_move"] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -1263,7 +1276,7 @@ export const mazeApp: AppDefinition<MazeState> = {
   },
   adapter,
   compileOptions: {
-    START_TYPES: ["event_whenflagclicked"],
+    START_TYPES: ["event_inicio", "event_whenflagclicked"],
     MOVE_TYPES: ["game_move"],
     BACK_TYPES: ["game_back"],
     TURN_LEFT_TYPES: ["game_turn_left"],
