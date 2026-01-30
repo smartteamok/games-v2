@@ -960,8 +960,7 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
   Blockly.Blocks["event_inicio"] = {
     init: function () {
       this.appendDummyInput()
-        .appendField(new Blockly.FieldImage(ICON_INICIO, GAME_ICON_SIZE, GAME_ICON_SIZE, "Inicio"))
-        .appendField("Inicio");
+        .appendField(new Blockly.FieldImage(ICON_INICIO, GAME_ICON_SIZE, GAME_ICON_SIZE, ""));
       this.setPreviousStatement(null);
       this.setNextStatement(true);
       this.setInputsInline(true);
