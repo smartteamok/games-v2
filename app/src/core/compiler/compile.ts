@@ -21,9 +21,12 @@ type BlockLike = {
 
 const getNextBlock = (block: BlockLike | null | undefined): BlockLike | null | undefined => {
   if (!block) return undefined;
+  const fromConnection = block.nextConnection?.targetBlock?.();
+  if (fromConnection != null && typeof fromConnection === "object" && fromConnection.id != null)
+    return fromConnection as BlockLike;
   const next = block.getNextBlock?.();
-  if (next !== undefined && next !== null) return next;
-  return block.nextConnection?.targetBlock?.() ?? undefined;
+  if (next != null && typeof next === "object" && next.id != null) return next;
+  return undefined;
 };
 
 const FALLBACK_NUMBER_KEYS = ["NUM", "N", "VALUE", "TIMES", "DURATION", "STEPS", "SECS", "MS"];
@@ -81,10 +84,14 @@ export const compileWorkspaceToAst = (
     throw new Error("Falta bloque start.");
   }
 
+  const MAX_CHAIN = 500;
   const compileChain = (first: BlockLike): Op[] => {
     const ops: Op[] = [];
     let current: BlockLike | null | undefined = first;
-    while (current) {
+    let n = 0;
+    while (current && n < MAX_CHAIN) {
+      n += 1;
+      if (!current.id || !current.type) break;
       ops.push(compileBlock(current));
       current = getNextBlock(current);
     }

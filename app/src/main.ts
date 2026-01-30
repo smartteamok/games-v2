@@ -161,9 +161,9 @@ function initGameView(gameId: string): void {
   const blocklyDiv = document.getElementById("blocklyDiv") as HTMLDivElement;
   const gameSelect = document.getElementById("game-select") as HTMLSelectElement;
 
-  apps.forEach((a) => a.registerBlocks(Blockly));
-
   currentApp = app;
+  app.registerBlocks(Blockly);
+
   workspace = createWorkspace(Blockly, blocklyDiv, app.toolboxXml, getWorkspaceOpts(app));
   appState = app.createInitialState();
 
@@ -175,6 +175,9 @@ function initGameView(gameId: string): void {
       : (project.appState as unknown);
     setStatus(`Cargado ${app.title} ✅`);
   } else {
+    const level = getLevel(1);
+    const blockType = (app as { blockType?: "horizontal" | "vertical" })?.blockType ?? "horizontal";
+    applyInitialBlocks(Blockly, workspace, level, blockType);
     setStatus(`${app.title} listo`);
   }
 
