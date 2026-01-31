@@ -9,6 +9,7 @@ import {
   drawMaze,
   updateProgressBar,
   getLevel,
+  applyInitialBlocks,
   makeInitialState,
   adapter,
   createMazeCheckConstraints
@@ -185,6 +186,8 @@ export const mazeVerticalApp: AppDefinition<MazeState> = {
     drawMaze(state);
   },
   adapter,
+  getLevel,
+  applyInitialBlocks,
   compileOptions: {
     START_TYPES: ["event_inicio", "event_whenflagclicked"],
     MOVE_TYPES: ["v_game_move"],

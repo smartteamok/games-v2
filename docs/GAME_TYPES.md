@@ -33,7 +33,7 @@ Basado en análisis de las principales plataformas educativas:
 
 ---
 
-### 2. 🎨 Artista / Turtle Graphics
+### 2. 🎨 Artista / Turtle Graphics (YA IMPLEMENTADO)
 **Concepto:** Controlar un "lápiz" o "tortuga" para dibujar formas geométricas.
 
 **Habilidades que enseña:**
@@ -220,7 +220,7 @@ Basado en análisis de las principales plataformas educativas:
 | 2 | practice | Práctica | maze-like | ✅ |
 | 3 | collector | Recolector | collector | 🔜 |
 | 4 | farmer | Granjero | farmer | 🔜 |
-| 5 | artist | Artista | artist | 🔜 |
+| 5 | artist | Artista | artist | ✅ |
 | 6 | shapes | Formas | artist | 🔜 |
 | 7 | sequence | Secuencias | sequence | 🔜 |
 | 8 | patterns | Patrones | sequence | 🔜 |

@@ -101,9 +101,9 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     blockType: "horizontal",
     gameType: "artist",
     programmingType: "Bloques horizontales",
-    levelsCount: 10,
+    levelsCount: 4,
     imageUrl: `${BASE_URL}landing/placeholder.svg`,
-    comingSoon: true,
+    comingSoon: false,
     skills: ["Geometría", "Bucles", "Ángulos"]
   },
 
