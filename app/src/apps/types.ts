@@ -32,6 +32,20 @@ export type AppDefinition<AppState> = {
   adapter: RuntimeAdapter<AppState>;
   compileOptions: CompileOptions;
   checkConstraints?: (workspace: unknown, state: AppState) => ConstraintResult;
+  /** Optional: resolve the full level config by id. */
+  getLevel?: (levelId: number) => {
+    id: number;
+    blockLimit?: number;
+    initialBlocks?: string;
+    initialBlocksVertical?: string;
+  };
+  /** Optional: apply initial blocks for the given level. */
+  applyInitialBlocks?: (
+    Blockly: unknown,
+    workspace: unknown,
+    level: unknown,
+    blockType: BlockType
+  ) => void;
   serializeState?: (state: AppState) => unknown;
   deserializeState?: (raw: unknown) => AppState;
 };

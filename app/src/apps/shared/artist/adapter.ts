@@ -41,7 +41,7 @@ export const createArtistAdapter = (ctx: ArtistAdapterContext): RuntimeAdapter<A
 
       switch (op.kind) {
         case "move": {
-          const distance = op.steps * 10; // Convert steps to pixels
+          const distance = op.steps;
           const { line } = moveForward(state, distance);
           if (line && onLineDrawn) {
             onLineDrawn(line.from.x, line.from.y, line.to.x, line.to.y);
@@ -86,7 +86,6 @@ export const createArtistAdapter = (ctx: ArtistAdapterContext): RuntimeAdapter<A
         }
 
         case "wait": {
-          await sleep(op.ms);
           break;
         }
 
