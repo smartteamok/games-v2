@@ -965,7 +965,7 @@ export const registerMazeLikeBlocks = (Blockly: any) => {
       this.setNextStatement(true);
       this.setInputsInline(true);
       this.setTooltip("Inicio del programa");
-      this.setColour("#4CBF56");
+      this.setColour("#FFAB19");
     }
   };
 

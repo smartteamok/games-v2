@@ -30,9 +30,10 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
           { type: "field_image", src: pathToIconsVertical + "play-green.svg", width: 24, height: 24, alt: "Inicio" }
         ],
         colour: "#EECE1C",
-        tooltip: "Inicio del programa",
-        extensions: ["shape_hat"]
+        tooltip: "Inicio del programa"
       });
+      this.setPreviousStatement(null); // No permite encastrar bloques por arriba, bordes rectos
+      this.setNextStatement(true);     // Permite bloques debajo
     }
   };
 
