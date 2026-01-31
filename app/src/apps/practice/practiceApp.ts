@@ -13,6 +13,7 @@ import {
   type AnimationRenderState,
   makeInitialState,
   getLevel,
+  applyInitialBlocks as applyInitialBlocksShared,
   drawMazeSimple,
   createSimpleMazeAdapter
 } from "../shared/maze-like";
@@ -29,6 +30,8 @@ const gameConfig: MazeGameConfig = {
 // UI state
 let ui: MazeUI | null = null;
 let animationState: AnimationRenderState = null;
+
+const getPracticeLevel = (levelId: number) => getLevel(practiceLevels, levelId);
 
 const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>): MazeUI => {
   if (ui && ui.rootEl === rootEl && rootEl.contains(ui.container)) {
@@ -162,7 +165,7 @@ export const practiceApp: AppDefinition<MazeState> = {
   registerBlocks: registerMazeLikeBlocks,
   createInitialState: () => makeInitialState(practiceLevels, 1, []),
   render: (rootEl, state, ctx) => {
-    const level = getLevel(practiceLevels, state.levelId);
+    const level = getPracticeLevel(state.levelId);
     if (level.id !== state.levelId) {
       const completedLevels = state.completedLevels ?? [];
       ctx.updateState(makeInitialState(practiceLevels, level.id, completedLevels));
@@ -173,6 +176,9 @@ export const practiceApp: AppDefinition<MazeState> = {
     drawMaze(state);
   },
   adapter: wrappedAdapter,
+  getLevel: getPracticeLevel,
+  applyInitialBlocks: (Blockly, workspace, level, blockType) =>
+    applyInitialBlocksShared(Blockly, workspace, level as any, blockType),
   compileOptions: {
     START_TYPES: ["event_inicio", "event_whenflagclicked"],
     MOVE_TYPES: ["game_move"],
@@ -192,7 +198,7 @@ export const practiceApp: AppDefinition<MazeState> = {
   deserializeState: (raw) => {
     if (!raw || typeof raw !== "object") return makeInitialState(practiceLevels, 1, []);
     const record = raw as Partial<MazeState>;
-    const level = getLevel(practiceLevels, record.levelId ?? 1);
+    const level = getPracticeLevel(record.levelId ?? 1);
     const completedLevels = Array.isArray(record.completedLevels) ? record.completedLevels : [];
     const state = makeInitialState(practiceLevels, level.id, completedLevels);
     const DIR_ORDER = ["N", "E", "S", "W"];
