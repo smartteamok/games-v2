@@ -1,6 +1,5 @@
 /**
  * Maze game - the main horizontal maze game.
- * Uses shared maze-like module for core functionality.
  */
 
 import type {
@@ -13,6 +12,14 @@ import type {
 import { levels } from "./levels";
 import type { MazeLevel } from "./levels";
 import { animateMoveAsync, animateTurnAsync } from "./animation";
+import { registerMazeLikeBlocks, MAZE_LIKE_TOOLBOX_XML, MAZE_COMPILE_OPTIONS } from "./blocks";
+import {
+  ensureSkillsPanel,
+  toggleSkillsPanel as togglePanel,
+  createStagePlayButton,
+  updateStagePlayButton as updateButton,
+  updateBlockLimitCounter as updateCounter
+} from "./ui";
 import {
   type MazeState,
   type MazeUI,
@@ -27,7 +34,6 @@ import {
   isBlocked,
   inBounds,
   getDelta,
-  countBlocks,
   applyInitialBlocks as sharedApplyInitialBlocks,
   initSprites,
   loadPlayerSprite,
@@ -36,21 +42,12 @@ import {
   DIR_ORDER
 } from "../shared/maze-like";
 
-// Re-export for backward compatibility
+// Re-exports for backward compatibility
+export { registerMazeLikeBlocks, MAZE_LIKE_TOOLBOX_XML } from "./blocks";
 export type { MazeState } from "../shared/maze-like";
 export type BlockType = "horizontal" | "vertical";
 
 const GAME_COLOR = "#4C97FF";
-const GAME_ICON_SIZE = 42;
-
-const BASE_URL = import.meta.env.BASE_URL;
-
-/** Iconos de bloques horizontales */
-const ICON_MOVE = `${BASE_URL}game-icons/move-right.svg`;
-const ICON_BACK = `${BASE_URL}game-icons/move-left.svg`;
-const ICON_TURN_LEFT = `${BASE_URL}game-icons/turn-left.svg`;
-const ICON_TURN_RIGHT = `${BASE_URL}game-icons/turn-right.svg`;
-const ICON_INICIO = `${BASE_URL}icons/play-green.svg`;
 
 const gameConfig: MazeGameConfig = {
   gameColor: GAME_COLOR,
@@ -61,9 +58,6 @@ const gameConfig: MazeGameConfig = {
 let ui: MazeUI | null = null;
 let animationState: AnimationRenderState = null;
 let spriteAnimState: SpriteAnimationState = createAnimationState();
-let skillsPanel: HTMLElement | undefined = undefined;
-let skillsPanelOverlay: HTMLElement | undefined = undefined;
-
 let mazeContainerW = 0;
 let mazeContainerH = 0;
 let resizeObserver: ResizeObserver | null = null;
@@ -140,13 +134,8 @@ export const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>):
   container.appendChild(canvas);
   rootEl.appendChild(container);
 
-  // Create skills panel once
-  if (!skillsPanel) {
-    skillsPanel = createSkillsPanel();
-    skillsPanelOverlay = createSkillsPanelOverlay();
-    document.body.appendChild(skillsPanelOverlay);
-    document.body.appendChild(skillsPanel);
-  }
+  // Ensure skills panel exists
+  const { panel: skillsPanel, overlay: skillsPanelOverlay } = ensureSkillsPanel();
 
   (rootEl as any).__renderContext = ctx;
 
@@ -194,218 +183,17 @@ export const ensureUI = (rootEl: HTMLElement, ctx: AppRenderContext<MazeState>):
   return mazeUI;
 };
 
-const createSkillsPanel = (): HTMLElement => {
-  const panel = document.createElement("div");
-  panel.className = "skills-panel";
-
-  const header = document.createElement("div");
-  header.className = "skills-panel-header";
-
-  const title = document.createElement("h2");
-  title.className = "skills-panel-title";
-  title.textContent = "Habilidades";
-
-  const closeBtn = document.createElement("button");
-  closeBtn.className = "skills-panel-close";
-  closeBtn.innerHTML = "×";
-  closeBtn.setAttribute("aria-label", "Cerrar panel");
-  closeBtn.addEventListener("click", () => closeSkillsPanel());
-
-  header.appendChild(title);
-  header.appendChild(closeBtn);
-
-  const content = document.createElement("div");
-  content.className = "skills-panel-content";
-  content.innerHTML = "<p class='skills-placeholder'>Las habilidades se mostrarán aquí.</p>";
-
-  panel.appendChild(header);
-  panel.appendChild(content);
-
-  return panel;
-};
-
-const createSkillsPanelOverlay = (): HTMLElement => {
-  const overlay = document.createElement("div");
-  overlay.className = "skills-panel-overlay";
-  overlay.addEventListener("click", () => closeSkillsPanel());
-  return overlay;
-};
-
-const createStagePlayButton = (): HTMLButtonElement => {
-  const button = document.createElement("button");
-  button.className = "stage-play-button";
-  button.setAttribute("aria-label", "Ejecutar programa");
-  button.setAttribute("data-state", "play");
-  updateStagePlayButtonState(button, "play");
-  return button;
-};
-
-const updateStagePlayButtonState = (button: HTMLButtonElement, state: "play" | "restart" | "disabled"): void => {
-  button.setAttribute("data-state", state);
-  button.disabled = state === "disabled";
-
-  if (state === "play") {
-    button.innerHTML = `
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
-      </svg>
-    `;
-    button.setAttribute("aria-label", "Ejecutar programa");
-  } else if (state === "restart") {
-    button.innerHTML = `
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/>
-      </svg>
-    `;
-    button.setAttribute("aria-label", "Reiniciar y ejecutar");
-  } else {
-    button.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
-      </svg>
-    `;
-    button.setAttribute("aria-label", "Ejecutando...");
-  }
-};
-
-export const updateStagePlayButton = (state: "play" | "restart" | "disabled"): void => {
-  const buttonH = document.querySelector(".stage-play-button") as HTMLButtonElement;
-  if (buttonH) updateStagePlayButtonState(buttonH, state);
-
-  const buttonV = document.getElementById("stage-play-btn-vertical") as HTMLButtonElement;
-  if (buttonV) updateVerticalPlayButtonState(buttonV, state);
-};
-
-const updateVerticalPlayButtonState = (button: HTMLButtonElement, state: "play" | "restart" | "disabled"): void => {
-  button.setAttribute("data-state", state);
-  button.disabled = state === "disabled";
-  if (state === "play") {
-    button.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>`;
-    button.setAttribute("aria-label", "Ejecutar programa");
-  } else if (state === "restart") {
-    button.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12H4C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="currentColor"/></svg>`;
-    button.setAttribute("aria-label", "Reiniciar y ejecutar");
-  } else {
-    button.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>`;
-    button.setAttribute("aria-label", "Ejecutando...");
-  }
-};
+// Re-export UI functions for backward compatibility
+export const toggleSkillsPanel = togglePanel;
+export const updateStagePlayButton = updateButton;
 
 export const updateBlockLimitCounter = (workspace: unknown, levelId: number): void => {
   const level = getLevel(levelId);
-  const blockLimit = level.blockLimit;
-  const instructionsEl = document.querySelector(".instructions");
-
-  if (!instructionsEl) return;
-
-  const instructionsContent = instructionsEl.querySelector(".instructions-content");
-  if (!instructionsContent) return;
-
-  if (blockLimit === undefined) {
-    instructionsContent.innerHTML = `
-      <div class="block-limit-counter">
-        <div class="block-limit-number">∞</div>
-        <div class="block-limit-label">sin límite</div>
-      </div>
-    `;
-    updateToolboxBlocks(workspace, true);
-    return;
-  }
-
-  const currentCount = countBlocks(workspace);
-  const remaining = blockLimit - currentCount;
-  const exceeded = remaining < 0;
-
-  if (exceeded) {
-    instructionsContent.innerHTML = `
-      <div class="block-limit-counter block-limit-exceeded">
-        <span class="block-limit-exceeded-msg">¡Cantidad de bloques superada!</span>
-      </div>
-    `;
-  } else {
-    instructionsContent.innerHTML = `
-      <div class="block-limit-counter">
-        <div class="block-limit-number">${remaining}</div>
-        <div class="block-limit-label">${remaining === 1 ? "instrucción disponible" : "instrucciones disponibles"}</div>
-      </div>
-    `;
-  }
-
-  updateToolboxBlocks(workspace, !exceeded);
-};
-
-const updateToolboxBlocks = (workspace: any, enabled: boolean): void => {
-  if (!workspace) return;
-
-  const toolbox = workspace.getToolbox?.();
-  if (!toolbox) return;
-
-  const toolboxItems = toolbox.getToolboxItems?.();
-  if (!toolboxItems) return;
-
-  for (const item of toolboxItems) {
-    if (!item) continue;
-
-    if (typeof item.setDisabled === "function") {
-      item.setDisabled(!enabled);
-    }
-
-    const element = item.getDiv?.();
-    if (element) {
-      if (enabled) {
-        element.classList.remove("blocklyDisabled");
-        element.style.opacity = "1";
-        element.style.pointerEvents = "auto";
-        element.style.cursor = "pointer";
-      } else {
-        element.classList.add("blocklyDisabled");
-        element.style.opacity = "0.4";
-        element.style.pointerEvents = "none";
-        element.style.cursor = "not-allowed";
-      }
-    }
-  }
-
-  const flyout = toolbox.getFlyout?.();
-  if (flyout) {
-    const flyoutElement = flyout.getWorkspace?.()?.getParentSvg?.()?.parentElement;
-    if (flyoutElement) {
-      flyoutElement.style.pointerEvents = enabled ? "auto" : "none";
-    }
-  }
+  updateCounter(workspace, level);
 };
 
 export const updateInstructions = (): void => {
   // Maintained for compatibility
-};
-
-const openSkillsPanel = (): void => {
-  const panel = skillsPanel || (document.querySelector(".skills-panel") as HTMLElement);
-  const overlay = skillsPanelOverlay || (document.querySelector(".skills-panel-overlay") as HTMLElement);
-  if (panel && overlay) {
-    panel.classList.add("open");
-    overlay.classList.add("active");
-    document.body.style.overflow = "hidden";
-  }
-};
-
-const closeSkillsPanel = (): void => {
-  const panel = skillsPanel || (document.querySelector(".skills-panel") as HTMLElement);
-  const overlay = skillsPanelOverlay || (document.querySelector(".skills-panel-overlay") as HTMLElement);
-  if (panel && overlay) {
-    panel.classList.remove("open");
-    overlay.classList.remove("active");
-    document.body.style.overflow = "";
-  }
-};
-
-export const toggleSkillsPanel = (): void => {
-  const panel = document.querySelector(".skills-panel") as HTMLElement;
-  if (panel?.classList.contains("open")) {
-    closeSkillsPanel();
-  } else {
-    openSkillsPanel();
-  }
 };
 
 export const updateProgressBar = (state?: MazeState): void => {
@@ -476,149 +264,6 @@ export const drawMaze = (state: MazeState): void => {
     spriteAnimState
   );
 };
-
-export const registerMazeLikeBlocks = (Blockly: any) => {
-  Blockly.Blocks["event_inicio"] = {
-    init: function () {
-      this.appendDummyInput()
-        .appendField(new Blockly.FieldImage(ICON_INICIO, GAME_ICON_SIZE, GAME_ICON_SIZE, ""));
-      this.setPreviousStatement(null);
-      this.setNextStatement(true);
-      this.setInputsInline(true);
-      this.setTooltip("Inicio del programa");
-      this.setColour("#FFAB19");
-    }
-  };
-
-  Blockly.Blocks["game_move"] = {
-    init: function () {
-      this.appendDummyInput().appendField(
-        new Blockly.FieldImage(ICON_MOVE, GAME_ICON_SIZE, GAME_ICON_SIZE, "Mover")
-      );
-      this.setPreviousStatement(true);
-      this.setNextStatement(true);
-      this.setInputsInline(true);
-      this.setTooltip("Mover hacia adelante");
-      this.setColour(GAME_COLOR);
-    }
-  };
-
-  Blockly.Blocks["game_back"] = {
-    init: function () {
-      this.appendDummyInput().appendField(
-        new Blockly.FieldImage(ICON_BACK, GAME_ICON_SIZE, GAME_ICON_SIZE, "Atrás")
-      );
-      this.setPreviousStatement(true);
-      this.setNextStatement(true);
-      this.setInputsInline(true);
-      this.setTooltip("Mover hacia atrás");
-      this.setColour(GAME_COLOR);
-    }
-  };
-
-  Blockly.Blocks["game_turn_left"] = {
-    init: function () {
-      this.appendDummyInput().appendField(
-        new Blockly.FieldImage(ICON_TURN_LEFT, GAME_ICON_SIZE, GAME_ICON_SIZE, "Girar izquierda")
-      );
-      this.setPreviousStatement(true);
-      this.setNextStatement(true);
-      this.setInputsInline(true);
-      this.setTooltip("Girar a la izquierda");
-      this.setColour(GAME_COLOR);
-    }
-  };
-
-  Blockly.Blocks["game_turn_right"] = {
-    init: function () {
-      this.appendDummyInput().appendField(
-        new Blockly.FieldImage(ICON_TURN_RIGHT, GAME_ICON_SIZE, GAME_ICON_SIZE, "Girar derecha")
-      );
-      this.setPreviousStatement(true);
-      this.setNextStatement(true);
-      this.setInputsInline(true);
-      this.setTooltip("Girar a la derecha");
-      this.setColour(GAME_COLOR);
-    }
-  };
-
-  const pathToMedia = `${BASE_URL}vendor/scratch-blocks/media/`;
-
-  Blockly.Blocks["game_repeat"] = {
-    init: function () {
-      this.jsonInit({
-        message0: "%1 %2 %3",
-        args0: [
-          { type: "input_statement", name: "SUBSTACK" },
-          {
-            type: "field_image",
-            src: pathToMedia + "icons/control_repeat.svg",
-            width: 40,
-            height: 40,
-            alt: "Repetir",
-            flip_rtl: true
-          },
-          { type: "input_value", name: "TIMES", check: "Number" }
-        ],
-        inputsInline: true,
-        previousStatement: null,
-        nextStatement: null,
-        category: Blockly.Categories?.control,
-        colour: Blockly.Colours?.control?.primary ?? "#FFAB19",
-        colourSecondary: Blockly.Colours?.control?.secondary,
-        colourTertiary: Blockly.Colours?.control?.tertiary,
-        colourQuaternary: Blockly.Colours?.control?.quaternary
-      });
-      this.setTooltip("Repetir varias veces");
-    }
-  };
-
-  Blockly.Blocks["game_wait"] = {
-    init: function () {
-      this.jsonInit({
-        message0: "%1 %2",
-        args0: [
-          {
-            type: "field_image",
-            src: pathToMedia + "icons/control_wait.svg",
-            width: 40,
-            height: 40,
-            alt: "Esperar"
-          },
-          { type: "input_value", name: "MS", check: "Number" }
-        ],
-        inputsInline: true,
-        previousStatement: null,
-        nextStatement: null,
-        category: Blockly.Categories?.control,
-        colour: Blockly.Colours?.control?.primary ?? "#FFAB19",
-        colourSecondary: Blockly.Colours?.control?.secondary,
-        colourTertiary: Blockly.Colours?.control?.tertiary,
-        colourQuaternary: Blockly.Colours?.control?.quaternary
-      });
-      this.setTooltip("Esperar milisegundos");
-    }
-  };
-};
-
-export const MAZE_LIKE_TOOLBOX_XML = `
-<xml>
-  <block type="game_move"></block>
-  <block type="game_back"></block>
-  <block type="game_turn_left"></block>
-  <block type="game_turn_right"></block>
-  <block type="game_repeat">
-    <value name="TIMES">
-      <shadow type="math_whole_number"><field name="NUM">4</field></shadow>
-    </value>
-  </block>
-  <block type="game_wait">
-    <value name="MS">
-      <shadow type="math_positive_number"><field name="NUM">500</field></shadow>
-    </value>
-  </block>
-</xml>
-`;
 
 export const adapter: RuntimeAdapter<MazeState> = {
   applyOp: async (op, state) => {
@@ -698,7 +343,9 @@ export const adapter: RuntimeAdapter<MazeState> = {
 
           const nextLevel = levels.find((l) => l.id === state.levelId + 1);
           state.status = "win";
-          state.message = nextLevel ? `¡Llegaste! Avanzando al nivel ${nextLevel.id}...` : "¡Llegaste! ¡Completaste todos los niveles!";
+          state.message = nextLevel
+            ? `¡Llegaste! Avanzando al nivel ${nextLevel.id}...`
+            : "¡Llegaste! ¡Completaste todos los niveles!";
           drawMaze(state);
           throw new Error("WIN");
         }
@@ -765,7 +412,11 @@ export const createMazeCheckConstraints = (repeatBlockType: string) => (
 
 const checkConstraints = createMazeCheckConstraints("game_repeat");
 
-const levelInfos: LevelInfo[] = levels.map((l) => ({ id: l.id, title: l.title, blockLimit: l.blockLimit }));
+const levelInfos: LevelInfo[] = levels.map((l) => ({
+  id: l.id,
+  title: l.title,
+  blockLimit: l.blockLimit
+}));
 
 export const mazeApp: AppDefinition<MazeState> = {
   id: "maze",
@@ -786,15 +437,7 @@ export const mazeApp: AppDefinition<MazeState> = {
     drawMaze(state);
   },
   adapter,
-  compileOptions: {
-    START_TYPES: ["event_inicio", "event_whenflagclicked"],
-    MOVE_TYPES: ["game_move"],
-    BACK_TYPES: ["game_back"],
-    TURN_LEFT_TYPES: ["game_turn_left"],
-    TURN_RIGHT_TYPES: ["game_turn_right"],
-    REPEAT_TYPES: ["game_repeat"],
-    WAIT_TYPES: ["game_wait"]
-  },
+  compileOptions: MAZE_COMPILE_OPTIONS,
   checkConstraints,
   serializeState: (state) => ({
     levelId: state.levelId,
