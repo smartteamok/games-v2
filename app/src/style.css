@@ -979,7 +979,7 @@ body {
 /* ========== Landing ========== */
 .landing {
   min-height: 100vh;
-  background: var(--color-bg-light);
+  background: #FEE2E2;
   padding: 24px 16px 48px;
   box-sizing: border-box;
 }
