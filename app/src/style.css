@@ -758,8 +758,58 @@ body {
   }
 }
 
-/* Responsive design */
+/* ========== Responsive Design ========== */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 1024px) {
+  /* Layout vertical: 2 columnas en tablet */
+  .layout-vertical .game-body-vertical {
+    grid-template-columns: 1fr minmax(250px, 35%);
+  }
+  
+  .layout-vertical .blockly-editor-column {
+    grid-column: 1;
+  }
+  
+  .layout-vertical .stage-column-vertical {
+    grid-column: 2;
+  }
+  
+  /* Botón play más pequeño */
+  .stage-play-button,
+  .layout-vertical .stage-play-button-vertical {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .stage-play-button svg,
+  .layout-vertical .stage-play-button-vertical svg {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Móviles y pantallas pequeñas */
 @media (max-width: 768px) {
+  /* === TOOLBAR === */
+  .toolbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  
+  .toolbar-left {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .toolbar-center {
+    display: none; /* Ocultar barra de niveles en móvil - usar botones en stage */
+  }
+  
+  .toolbar-right {
+    gap: 8px;
+  }
+  
   .toolbar-btn span {
     display: none;
   }
@@ -770,14 +820,381 @@ body {
     justify-content: center;
   }
   
-  .stage {
-    width: 280px;
-    padding: 12px;
+  .toolbar-label {
+    display: none;
+  }
+  
+  .toolbar-sep {
+    display: none;
   }
   
   .game-select {
-    min-width: 140px;
+    min-width: 100px;
+    font-size: 0.85rem;
+    padding: 6px 8px;
+  }
+  
+  /* === LAYOUT HORIZONTAL (por defecto) === */
+  .layout {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height para móviles */
+  }
+  
+  .game-stage {
+    flex: 1 1 40%;
+    min-height: 180px;
+  }
+  
+  .editor-container {
+    flex: 1 1 50%;
+    flex-direction: column;
+  }
+  
+  /* Ocultar panel de instrucciones en móvil - usar contador flotante */
+  .instructions {
+    display: none;
+  }
+  
+  .editor {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  /* Stage adaptativo */
+  .stage {
+    padding: 8px;
+  }
+  
+  /* Botón Play más pequeño y centrado abajo-izquierda */
+  .stage-play-button {
+    width: 60px;
+    height: 60px;
+    left: 12px;
+    bottom: 12px;
+    top: auto;
+    transform: none;
+  }
+  
+  .stage-play-button:hover:not(:disabled) {
+    transform: scale(1.05);
+  }
+  
+  .stage-play-button:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+  
+  .stage-play-button svg {
+    width: 32px;
+    height: 32px;
+  }
+  
+  /* Status más compacto */
+  .maze-status-container {
+    right: 12px;
+    top: 12px;
+    transform: none;
+  }
+  
+  .maze-status {
     font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+  
+  /* Canvas del laberinto */
+  .maze-canvas {
+    max-width: calc(100% - 80px); /* Dejar espacio para botón play */
+    max-height: 100%;
+  }
+  
+  /* Barra de progreso compacta */
+  .maze-progress-bar {
+    padding: 6px;
+    gap: 4px;
+  }
+  
+  .maze-progress-level {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  
+  /* Mensaje de éxito más pequeño */
+  .success-message {
+    font-size: 1.25rem;
+    padding: 16px 32px;
+    border-radius: 12px;
+  }
+  
+  /* === LAYOUT VERTICAL en móvil === */
+  .layout-vertical .game-body-vertical {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .layout-vertical .blockly-editor-column {
+    order: 2;
+    flex: 1 1 55%;
+    min-height: 0;
+    border-right: none;
+    border-top: 1px solid var(--color-border);
+  }
+  
+  .layout-vertical .stage-column-vertical {
+    order: 1;
+    flex: 1 1 35%;
+    min-height: 150px;
+    max-height: 40vh;
+  }
+  
+  .layout-vertical .game-stage-vertical {
+    border-left: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  /* Barra de controles vertical - más compacta */
+  .layout-vertical .controls-bar-vertical {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .layout-vertical .stage-play-button-vertical {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .layout-vertical .stage-play-button-vertical svg {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .layout-vertical .instructions-vertical {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .layout-vertical .instructions-vertical .block-limit-counter {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  
+  .layout-vertical .instructions-vertical .block-limit-number {
+    font-size: 1.25rem;
+  }
+  
+  .layout-vertical .instructions-vertical .block-limit-label {
+    font-size: 0.75rem;
+  }
+  
+  .layout-vertical .status-vertical {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+  
+  /* Skills panel en móvil */
+  .skills-panel {
+    width: 100%;
+    max-width: 350px;
+  }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 480px) {
+  .toolbar {
+    padding: 6px 8px;
+  }
+  
+  .game-select {
+    min-width: 80px;
+    font-size: 0.8rem;
+  }
+  
+  /* Botón play aún más pequeño */
+  .stage-play-button,
+  .layout-vertical .stage-play-button-vertical {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .stage-play-button svg,
+  .layout-vertical .stage-play-button-vertical svg {
+    width: 26px;
+    height: 26px;
+  }
+  
+  /* Status mínimo */
+  .maze-status {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+  
+  /* Barra de progreso aún más compacta */
+  .maze-progress-level {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+  
+  /* Layout vertical ultra compacto */
+  .layout-vertical .stage-column-vertical {
+    max-height: 35vh;
+  }
+  
+  .layout-vertical .controls-bar-vertical {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  
+  .layout-vertical .instructions-vertical .block-limit-number {
+    font-size: 1rem;
+  }
+  
+  .success-message {
+    font-size: 1rem;
+    padding: 12px 24px;
+  }
+}
+
+/* Orientación landscape en móvil */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* En landscape, el stage va a la izquierda y editor a la derecha */
+  .layout {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .toolbar {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+  
+  .game-stage {
+    flex: 1 1 45%;
+    min-height: 0;
+    border-bottom: none;
+    border-right: 1px solid var(--color-border);
+  }
+  
+  .editor-container {
+    flex: 1 1 45%;
+    border-top: none;
+  }
+  
+  /* Layout vertical en landscape */
+  .layout-vertical .game-body-vertical {
+    flex-direction: row;
+  }
+  
+  .layout-vertical .blockly-editor-column {
+    order: 1;
+    flex: 1 1 55%;
+    border-top: none;
+    border-right: 1px solid var(--color-border);
+  }
+  
+  .layout-vertical .stage-column-vertical {
+    order: 2;
+    flex: 1 1 40%;
+    max-height: none;
+  }
+  
+  .layout-vertical .game-stage-vertical {
+    border-left: 1px solid var(--color-border);
+    border-bottom: none;
+  }
+}
+
+/* ========== Contador de bloques flotante para móvil ========== */
+.floating-block-counter {
+  display: none; /* Se muestra solo en móvil */
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 90;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-border);
+}
+
+.floating-block-counter .block-count-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.floating-block-counter .block-count-display.exceeded {
+  color: #DC2626;
+}
+
+.floating-block-counter .block-count-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========== Navegación de niveles para móvil ========== */
+.mobile-level-nav {
+  display: none; /* Se muestra solo en móvil */
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-level-nav button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mobile-level-nav button:hover:not(:disabled) {
+  background: var(--color-bg-light);
+}
+
+.mobile-level-nav button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.mobile-level-nav .level-indicator {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 60px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .floating-block-counter {
+    display: block;
+  }
+  
+  .mobile-level-nav {
+    display: flex;
   }
 }
 
