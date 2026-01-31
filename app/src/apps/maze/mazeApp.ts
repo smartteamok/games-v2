@@ -456,7 +456,8 @@ export const mazeApp: AppDefinition<MazeState> = {
   compileOptions: MAZE_COMPILE_OPTIONS,
   checkConstraints,
   getLevel,
-  applyInitialBlocks,
+  applyInitialBlocks: (Blockly, workspace, level, blockType) =>
+    applyInitialBlocks(Blockly, workspace, level as MazeLevel, blockType),
   serializeState: (state) => ({
     levelId: state.levelId,
     player: state.player,
