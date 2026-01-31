@@ -8,6 +8,10 @@ export type CompileOptions = {
   TURN_RIGHT_TYPES: string[];
   REPEAT_TYPES: string[];
   WAIT_TYPES: string[];
+  PEN_UP_TYPES?: string[];
+  PEN_DOWN_TYPES?: string[];
+  COLOR_TYPES?: string[];
+  WIDTH_TYPES?: string[];
 };
 
 type BlockLike = {
@@ -62,6 +66,19 @@ const readNumberField = (block: BlockLike, keys: string[], fallback: number): nu
   return fallback;
 };
 
+const readStringField = (block: BlockLike, keys: string[], fallback: string): string => {
+  if (!block.getFieldValue) {
+    return fallback;
+  }
+  for (const key of keys) {
+    const raw = block.getFieldValue(key);
+    if (raw !== null && raw !== undefined && raw !== "") {
+      return String(raw);
+    }
+  }
+  return fallback;
+};
+
 // Compiles a horizontal workspace into a simple AST for the selected app.
 export const compileWorkspaceToAst = (
   Blockly: unknown,
@@ -77,6 +94,10 @@ export const compileWorkspaceToAst = (
   const turnRightTypes = new Set(opts.TURN_RIGHT_TYPES);
   const repeatTypes = new Set(opts.REPEAT_TYPES);
   const waitTypes = new Set(opts.WAIT_TYPES);
+  const penUpTypes = new Set(opts.PEN_UP_TYPES ?? []);
+  const penDownTypes = new Set(opts.PEN_DOWN_TYPES ?? []);
+  const colorTypes = new Set(opts.COLOR_TYPES ?? []);
+  const widthTypes = new Set(opts.WIDTH_TYPES ?? []);
 
   const topBlocks = workspace.getTopBlocks(true);
   const startBlock = topBlocks.find((block) => startTypes.has(block.type));
@@ -112,10 +133,26 @@ export const compileWorkspaceToAst = (
       return { kind: "move", steps: -Math.abs(steps), blockId: block.id };
     }
     if (turnLeftTypes.has(type)) {
-      return { kind: "turn", direction: "left", blockId: block.id };
+      const degrees = readNumberField(block, ["DEGREES", "DEG", "ANGLE", "NUM"], 90);
+      return { kind: "turn", direction: "left", degrees, blockId: block.id };
     }
     if (turnRightTypes.has(type)) {
-      return { kind: "turn", direction: "right", blockId: block.id };
+      const degrees = readNumberField(block, ["DEGREES", "DEG", "ANGLE", "NUM"], 90);
+      return { kind: "turn", direction: "right", degrees, blockId: block.id };
+    }
+    if (penUpTypes.has(type)) {
+      return { kind: "pen", down: false, blockId: block.id };
+    }
+    if (penDownTypes.has(type)) {
+      return { kind: "pen", down: true, blockId: block.id };
+    }
+    if (colorTypes.has(type)) {
+      const value = readStringField(block, ["COLOR", "VALUE", "NAME"], "#000000");
+      return { kind: "color", value, blockId: block.id };
+    }
+    if (widthTypes.has(type)) {
+      const value = readNumberField(block, ["WIDTH", "NUM", "N"], 3);
+      return { kind: "width", value, blockId: block.id };
     }
     if (waitTypes.has(type)) {
       const msRaw = readNumberField(block, ["MS"], Number.NaN);

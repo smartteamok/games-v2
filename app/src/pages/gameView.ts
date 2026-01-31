@@ -51,6 +51,16 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
       <div class="stage-column-vertical">
         <div id="game-stage" class="game-stage game-stage-vertical">
           <div id="stage" class="stage"></div>
+          <!-- Navegación de niveles para móvil -->
+          <div id="mobile-level-nav" class="mobile-level-nav">
+            <button id="prev-level-btn" aria-label="Nivel anterior">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span id="level-indicator" class="level-indicator">1 / 10</span>
+            <button id="next-level-btn" aria-label="Siguiente nivel">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -81,9 +91,26 @@ export function getGameLayoutHtml(blockType?: BlockType): string {
 
     <div id="game-stage" class="game-stage">
       <div id="stage" class="stage"></div>
+      <!-- Navegación de niveles para móvil -->
+      <div id="mobile-level-nav" class="mobile-level-nav">
+        <button id="prev-level-btn" aria-label="Nivel anterior">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span id="level-indicator" class="level-indicator">1 / 10</span>
+        <button id="next-level-btn" aria-label="Siguiente nivel">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
     </div>
 
     <div class="editor-container">
+      <!-- Contador de bloques flotante para móvil -->
+      <div id="floating-block-counter" class="floating-block-counter">
+        <div class="block-count-display">
+          <svg class="block-count-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span id="floating-block-count">0 / 10</span>
+        </div>
+      </div>
       <div id="instructions" class="instructions">
         <h3 class="instructions-title">Instrucciones disponibles</h3>
         <div class="instructions-content">

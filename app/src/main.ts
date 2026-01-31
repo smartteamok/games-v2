@@ -7,13 +7,7 @@ import { runProgram, type RuntimeController } from "./core/runtime/runtime";
 import { apps, getAppById } from "./apps/registry";
 import type { AppDefinition, AppRenderContext } from "./apps/types";
 import { highlightBlock, clearBlockHighlight } from "./core/editor/blockHighlight";
-import {
-  toggleSkillsPanel,
-  updateStagePlayButton,
-  updateBlockLimitCounter,
-  getLevel,
-  applyInitialBlocks
-} from "./apps/maze/mazeApp";
+import { toggleSkillsPanel, updateStagePlayButton, updateBlockLimitCounter } from "./apps/maze/ui";
 import { getRoute, onRouteChange, navigateToGame } from "./router";
 import { mountLanding } from "./pages/landing";
 import { getGameLayoutHtml, showComingSoon } from "./pages/gameView";
@@ -130,8 +124,11 @@ function getLevelIdFromState(state: unknown): number | undefined {
 
 function refreshBlockLimit(): void {
   const levelId = getLevelIdFromState(appState);
-  if (levelId !== undefined && workspace) {
-    updateBlockLimitCounter(workspace, levelId);
+  if (levelId !== undefined && workspace && currentApp?.getLevel) {
+    const level = currentApp.getLevel(levelId);
+    if (level) {
+      updateBlockLimitCounter(workspace, level as any);
+    }
   }
 }
 
@@ -165,9 +162,11 @@ function initGameView(gameId: string): void {
   workspace = createWorkspace(Blockly, blocklyDiv, app.toolboxXml, getWorkspaceOpts(app));
   appState = app.createInitialState();
 
-  const level = getLevel(1);
   const blockType = (app as { blockType?: "horizontal" | "vertical" })?.blockType ?? "horizontal";
-  applyInitialBlocks(Blockly, workspace, level, blockType);
+  const initialLevel = app.getLevel?.(1);
+  if (initialLevel && app.applyInitialBlocks) {
+    app.applyInitialBlocks(Blockly, workspace, initialLevel, blockType);
+  }
   setStatus(`${app.title} listo`);
 
   gameSelect.innerHTML = "";
@@ -191,9 +190,11 @@ function initGameView(gameId: string): void {
       const nextLevelId = getLevelIdFromState(nextState);
       if (prevLevelId !== nextLevelId && workspace && nextLevelId !== undefined) {
         (workspace as { clear?: () => void }).clear?.();
-        const level = getLevel(nextLevelId);
         const blockType = (currentApp as { blockType?: "horizontal" | "vertical" })?.blockType ?? "horizontal";
-        applyInitialBlocks(Blockly, workspace, level, blockType);
+        const nextLevel = currentApp?.getLevel?.(nextLevelId);
+        if (nextLevel && currentApp?.applyInitialBlocks) {
+          currentApp.applyInitialBlocks(Blockly, workspace, nextLevel, blockType);
+        }
         appState = nextState;
         if (currentApp) currentApp.render(stageEl, appState, buildContext());
         refreshBlockLimit();
@@ -283,7 +284,7 @@ function initGameView(gameId: string): void {
             if (typeof appState === "object" && appState) {
               const statusValue = (appState as { status?: string }).status;
               const stateMessage = (appState as { message?: string }).message;
-              if (statusValue === "win") {
+              if (statusValue === "win" || statusValue === "complete") {
                 triggerWinEffect(stageEl);
                 if (currentApp) currentApp.render(stageEl, appState, buildContext());
                 setStatus(stateMessage ?? "Ganaste ✅", "win");

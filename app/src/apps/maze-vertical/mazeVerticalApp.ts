@@ -3,12 +3,13 @@
  * los bloques y el toolbox; reutiliza ensureUI, drawMaze, adapter y niveles del maze horizontal.
  */
 import type { AppDefinition, LevelInfo } from "../types";
-import { levels } from "../maze/levels";
+import { levels, type MazeLevel } from "../maze/levels";
 import {
   ensureUI,
   drawMaze,
   updateProgressBar,
   getLevel,
+  applyInitialBlocks,
   makeInitialState,
   adapter,
   createMazeCheckConstraints
@@ -185,6 +186,9 @@ export const mazeVerticalApp: AppDefinition<MazeState> = {
     drawMaze(state);
   },
   adapter,
+  getLevel,
+  applyInitialBlocks: (Blockly, workspace, level, blockType) =>
+    applyInitialBlocks(Blockly, workspace, level as MazeLevel, blockType),
   compileOptions: {
     START_TYPES: ["event_inicio", "event_whenflagclicked"],
     MOVE_TYPES: ["v_game_move"],
