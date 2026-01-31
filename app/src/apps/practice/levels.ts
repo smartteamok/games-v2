@@ -1,4 +1,4 @@
-import type { Direction, MazeLevel } from "../maze/levels";
+import type { Direction, MazeLevel } from "../shared/maze-like";
 
 export type { Direction, MazeLevel };
 

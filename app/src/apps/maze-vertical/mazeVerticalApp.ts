@@ -13,12 +13,11 @@ import {
   adapter,
   createMazeCheckConstraints
 } from "../maze/mazeApp";
-import type { MazeState } from "../maze/mazeApp";
+import type { MazeState } from "../shared/maze-like";
 
 const GAME_COLOR = "#4C97FF";
 const BASE_URL = import.meta.env.BASE_URL;
 const pathToMedia = `${BASE_URL}vendor/scratch-blocks/media/`;
-/** Iconos de bloques verticales; carpeta distinta a horizontales. Ver app/public/BLOCK_ICONS.md */
 const pathToIconsVertical = `${BASE_URL}game-icons-vertical/`;
 
 export const registerVerticalMazeBlocks = (Blockly: any): void => {
@@ -32,8 +31,8 @@ export const registerVerticalMazeBlocks = (Blockly: any): void => {
         colour: "#EECE1C",
         tooltip: "Inicio del programa"
       });
-      this.setPreviousStatement(null); // No permite encastrar bloques por arriba, bordes rectos
-      this.setNextStatement(true);     // Permite bloques debajo
+      this.setPreviousStatement(null);
+      this.setNextStatement(true);
     }
   };
 
@@ -209,10 +208,10 @@ export const mazeVerticalApp: AppDefinition<MazeState> = {
     const level = getLevel(record.levelId ?? 1);
     const completedLevels = Array.isArray(record.completedLevels) ? record.completedLevels : [];
     const state = makeInitialState(level.id, completedLevels);
+    const DIR_ORDER = ["N", "E", "S", "W"];
     if (record.player && typeof record.player.x === "number" && typeof record.player.y === "number") {
       state.player.x = record.player.x;
       state.player.y = record.player.y;
-      const DIR_ORDER = ["N", "E", "S", "W"];
       if (record.player.dir && DIR_ORDER.includes(record.player.dir)) {
         state.player.dir = record.player.dir;
       }

@@ -1,4 +1,4 @@
-export type BlockType = "horizontal" | "vertical";
+import type { BlockType } from "../apps/types";
 
 /**
  * HTML del layout de juego. Para vertical: 3 columnas (bloques | canvas | maze).

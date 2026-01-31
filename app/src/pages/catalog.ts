@@ -4,7 +4,7 @@
  * Solo maze y practice están implementados; el resto son placeholders "Próximamente".
  */
 
-export type BlockType = "horizontal" | "vertical";
+import type { BlockType } from "../apps/types";
 
 export type GameCatalogEntry = {
   id: string;

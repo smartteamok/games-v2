@@ -1,33 +1,6 @@
-export type Direction = "N" | "E" | "S" | "W";
+import type { Direction, MazeLevel, Obstacle } from "../shared/maze-like";
 
-/** Obstáculo en el maze. type define qué sprite usar (ej: "rock", "tree", "box"). Sin type usa el dibujo por defecto. */
-export type Obstacle = {
-  x: number;
-  y: number;
-  type?: string;
-};
-
-export type MazeLevel = {
-  id: number;
-  title: string;
-  gridW: number;
-  gridH: number;
-  walls: Array<Obstacle>;
-  start: { x: number; y: number; dir: Direction };
-  goal: { x: number; y: number };
-  constraints?: { maxBlocks?: number; mustUseRepeat?: boolean };
-  blockLimit?: number;
-  /** Imagen de fondo del canvas. Ruta relativa a public/game-sprites/backgrounds/ (ej: "level1.png"). */
-  backgroundImage?: string;
-  /** Instrucciones iniciales para el nivel (ej. "Llegá a la meta usando solo 8 bloques"). */
-  instructions?: string;
-  /**
-   * Bloques iniciales por nivel (Blockly XML). Por defecto vacío.
-   * Horizontal: use "initialBlocks" (tipos game_*). Vertical: "initialBlocksVertical" (tipos v_game_*).
-   */
-  initialBlocks?: string;
-  initialBlocksVertical?: string;
-};
+export type { Direction, MazeLevel, Obstacle };
 
 export const levels: MazeLevel[] = [
   {
