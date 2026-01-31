@@ -422,13 +422,39 @@ export { mazeApp };
 
 ## 📊 Métricas Actuales vs Objetivo
 
-| Métrica | Actual | Objetivo |
-|---------|--------|----------|
-| Líneas en `mazeApp.ts` | 1315 | <300 |
-| % código duplicado `practiceApp` | ~80% | 0% |
-| Archivos >500 líneas | 3 | 0 |
-| Variables globales en maze | ~15 | 0 |
-| Definiciones duplicadas de `BlockType` | 4 | 1 |
+| Métrica | Antes | Después | Objetivo |
+|---------|-------|---------|----------|
+| Líneas en `mazeApp.ts` | 1315 | 469 | <500 ✅ |
+| Líneas en `practiceApp.ts` | 481 | 211 | <300 ✅ |
+| % código duplicado `practiceApp` | ~80% | ~0% | 0% ✅ |
+| Archivos >500 líneas | 3 | 0 | 0 ✅ |
+| Definiciones duplicadas de `BlockType` | 4 | 1 | 1 ✅ |
+
+---
+
+## ✅ Refactoring Completado
+
+### Fase 1: Módulo Compartido maze-like
+- ✅ Creado `apps/shared/maze-like/` con:
+  - `types.ts` - Tipos compartidos (MazeState, MazeLevel, etc.)
+  - `constants.ts` - Constantes (direcciones, tamaños, colores)
+  - `logic.ts` - Lógica de juego (turnLeft, turnRight, isBlocked, etc.)
+  - `sprites.ts` - Carga y gestión de sprites
+  - `renderer.ts` - Renderizado del maze
+  - `adapter.ts` - RuntimeAdapter compartido
+  - `constraints.ts` - Validación de constraints
+
+### Fase 2: Modularización de mazeApp.ts
+- ✅ Extraído `apps/maze/blocks.ts` - Definiciones de bloques
+- ✅ Creado `apps/maze/ui/`:
+  - `skillsPanel.ts` - Panel lateral de habilidades
+  - `playButton.ts` - Botón play/restart
+  - `blockCounter.ts` - Contador de bloques
+- ✅ Reducido `mazeApp.ts` de 1315 a 469 líneas
+
+### Fase 3: Consolidación de Tipos
+- ✅ `BlockType` consolidado en `apps/types.ts`
+- ✅ Actualizados imports en `gameView.ts` y `catalog.ts`
 
 ---
 
