@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Curved arrow turning left -->
+  <circle cx="24" cy="24" r="20" fill="#9966FF" stroke="#7744DD" stroke-width="2"/>
+  <path d="M32 28a10 10 0 0 0-16 0" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M16 22v8h8" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

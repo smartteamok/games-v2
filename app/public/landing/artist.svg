@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Background -->
+  <rect width="200" height="200" rx="20" fill="#9966FF"/>
+  
+  <!-- Grid pattern -->
+  <g opacity="0.2" stroke="white" stroke-width="1">
+    <line x1="50" y1="0" x2="50" y2="200"/>
+    <line x1="100" y1="0" x2="100" y2="200"/>
+    <line x1="150" y1="0" x2="150" y2="200"/>
+    <line x1="0" y1="50" x2="200" y2="50"/>
+    <line x1="0" y1="100" x2="200" y2="100"/>
+    <line x1="0" y1="150" x2="200" y2="150"/>
+  </g>
+  
+  <!-- Drawing: A star shape -->
+  <path d="M100 40 L115 80 L160 80 L125 105 L140 150 L100 125 L60 150 L75 105 L40 80 L85 80 Z" 
+        fill="none" stroke="#FFD700" stroke-width="6" stroke-linejoin="round"/>
+  
+  <!-- Turtle/cursor at tip -->
+  <g transform="translate(100, 40) rotate(-90)">
+    <!-- Turtle body -->
+    <path d="M12 0 L-8 -8 L-4 0 L-8 8 Z" fill="#4C97FF" stroke="white" stroke-width="2"/>
+  </g>
+  
+  <!-- Pencil trail effect -->
+  <circle cx="100" cy="40" r="4" fill="#FFD700"/>
+  
+  <!-- Title background -->
+  <rect x="20" y="160" width="160" height="30" rx="8" fill="rgba(0,0,0,0.3)"/>
+  
+  <!-- Title text -->
+  <text x="100" y="182" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">Artista</text>
+</svg>

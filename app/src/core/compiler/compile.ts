@@ -7,7 +7,15 @@ export type CompileOptions = {
   TURN_LEFT_TYPES: string[];
   TURN_RIGHT_TYPES: string[];
   REPEAT_TYPES: string[];
-  WAIT_TYPES: string[];
+  WAIT_TYPES?: string[];
+  // Artist-specific
+  PEN_UP_TYPES?: string[];
+  PEN_DOWN_TYPES?: string[];
+  COLOR_TYPES?: string[];
+  WIDTH_TYPES?: string[];
+  // Default values for simple blocks (no input)
+  SIMPLE_MOVE_DISTANCE?: number;
+  SIMPLE_TURN_ANGLE?: number;
 };
 
 type BlockLike = {
@@ -76,7 +84,14 @@ export const compileWorkspaceToAst = (
   const turnLeftTypes = new Set(opts.TURN_LEFT_TYPES);
   const turnRightTypes = new Set(opts.TURN_RIGHT_TYPES);
   const repeatTypes = new Set(opts.REPEAT_TYPES);
-  const waitTypes = new Set(opts.WAIT_TYPES);
+  const waitTypes = new Set(opts.WAIT_TYPES ?? []);
+  // Artist-specific
+  const penUpTypes = new Set(opts.PEN_UP_TYPES ?? []);
+  const penDownTypes = new Set(opts.PEN_DOWN_TYPES ?? []);
+  const colorTypes = new Set(opts.COLOR_TYPES ?? []);
+  const widthTypes = new Set(opts.WIDTH_TYPES ?? []);
+  const simpleMoveDistance = opts.SIMPLE_MOVE_DISTANCE ?? 1;
+  const simpleTurnAngle = opts.SIMPLE_TURN_ANGLE ?? 90;
 
   const topBlocks = workspace.getTopBlocks(true);
   const startBlock = topBlocks.find((block) => startTypes.has(block.type));
@@ -104,18 +119,21 @@ export const compileWorkspaceToAst = (
       return { kind: "start", blockId: block.id };
     }
     if (moveTypes.has(type)) {
-      const steps = readNumberField(block, ["STEPS", "NUM", "N"], 1);
+      // Check if it's a simple move (no input) or move with distance
+      const steps = readNumberField(block, ["DISTANCE", "STEPS", "NUM", "N"], simpleMoveDistance);
       return { kind: "move", steps, blockId: block.id };
     }
     if (backTypes.has(type)) {
-      const steps = readNumberField(block, ["STEPS", "NUM", "N"], 1);
+      const steps = readNumberField(block, ["DISTANCE", "STEPS", "NUM", "N"], simpleMoveDistance);
       return { kind: "move", steps: -Math.abs(steps), blockId: block.id };
     }
     if (turnLeftTypes.has(type)) {
-      return { kind: "turn", direction: "left", blockId: block.id };
+      const degrees = readNumberField(block, ["ANGLE", "DEGREES", "NUM", "N"], simpleTurnAngle);
+      return { kind: "turn", direction: "left", degrees, blockId: block.id };
     }
     if (turnRightTypes.has(type)) {
-      return { kind: "turn", direction: "right", blockId: block.id };
+      const degrees = readNumberField(block, ["ANGLE", "DEGREES", "NUM", "N"], simpleTurnAngle);
+      return { kind: "turn", direction: "right", degrees, blockId: block.id };
     }
     if (waitTypes.has(type)) {
       const msRaw = readNumberField(block, ["MS"], Number.NaN);
@@ -135,6 +153,22 @@ export const compileWorkspaceToAst = (
         block.getInputTargetBlock?.("SUBSTACK") || block.getInputTargetBlock?.("DO");
       const body = bodyStart ? compileChain(bodyStart) : [];
       return { kind: "repeat", times, body, blockId: block.id };
+    }
+    // Artist-specific blocks
+    if (penUpTypes.has(type)) {
+      return { kind: "pen", down: false, blockId: block.id };
+    }
+    if (penDownTypes.has(type)) {
+      return { kind: "pen", down: true, blockId: block.id };
+    }
+    if (colorTypes.has(type)) {
+      const color = block.getFieldValue?.("COLOR") as string ?? "#000000";
+      return { kind: "color", value: color, blockId: block.id };
+    }
+    if (widthTypes.has(type)) {
+      const widthStr = block.getFieldValue?.("WIDTH") as string ?? "3";
+      const width = parseInt(widthStr, 10) || 3;
+      return { kind: "width", value: width, blockId: block.id };
     }
     throw new Error(`Bloque no soportado aún: ${type}`);
   };

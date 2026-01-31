@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Pencil pointing down (drawing) -->
+  <circle cx="24" cy="24" r="20" fill="#9966FF" stroke="#7744DD" stroke-width="2"/>
+  <!-- Pencil body -->
+  <rect x="20" y="12" width="8" height="18" rx="1" fill="white"/>
+  <!-- Pencil tip touching surface -->
+  <polygon points="20,30 28,30 24,38" fill="white"/>
+  <!-- Down arrow indicator -->
+  <path d="M24 40l-4-4h8l-4 4z" fill="#FFD700"/>
+  <!-- Green checkmark on tip indicating drawing -->
+  <circle cx="24" cy="35" r="3" fill="#66CC66" stroke="#44AA44" stroke-width="1"/>
+  <!-- Line being drawn -->
+  <path d="M10 40h28" stroke="#333" stroke-width="2" stroke-dasharray="4 2"/>
+</svg>
