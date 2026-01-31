@@ -18,7 +18,8 @@ import {
   toggleSkillsPanel as togglePanel,
   createStagePlayButton,
   updateStagePlayButton as updateButton,
-  updateBlockLimitCounter as updateCounter
+  updateBlockLimitCounter as updateCounter,
+  updateMobileLevelNav
 } from "./ui";
 import {
   type MazeState,
@@ -244,6 +245,21 @@ export const updateProgressBar = (state?: MazeState): void => {
 
     ui.progressBar.appendChild(levelBtn);
   }
+
+  // Update mobile level navigation
+  updateMobileLevelNav(
+    currentLevelId,
+    levels.length,
+    completedLevels,
+    (levelId: number) => {
+      const ctx = (ui?.rootEl as any).__renderContext as AppRenderContext<MazeState> | undefined;
+      if (ctx) {
+        const nextState = makeInitialState(levelId, completedLevels);
+        ctx.updateState(nextState);
+        ctx.setStatus(`Nivel ${levelId} listo`);
+      }
+    }
+  );
 };
 
 export const drawMaze = (state: MazeState): void => {
