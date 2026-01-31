@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Pencil pointing up (not drawing) -->
+  <circle cx="24" cy="24" r="20" fill="#9966FF" stroke="#7744DD" stroke-width="2"/>
+  <!-- Pencil body -->
+  <rect x="20" y="14" width="8" height="18" rx="1" fill="white"/>
+  <!-- Pencil tip lifted -->
+  <polygon points="20,32 28,32 24,38" fill="white"/>
+  <!-- Up arrow indicator -->
+  <path d="M24 10l-4 4h8l-4-4z" fill="#FFD700"/>
+  <!-- X mark on tip indicating not drawing -->
+  <circle cx="24" cy="35" r="3" fill="#FF6666" stroke="#CC4444" stroke-width="1"/>
+</svg>

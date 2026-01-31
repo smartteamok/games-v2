@@ -93,7 +93,7 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     skills: ["Secuencias", "Bucles", "Condicionales"]
   },
 
-  // 5. Artist - Módulo listo, juego pendiente
+  // 5. Artist - Implementado ✅
   {
     id: "artist",
     title: "Artista",
@@ -102,8 +102,8 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     gameType: "artist",
     programmingType: "Bloques horizontales",
     levelsCount: 10,
-    imageUrl: `${BASE_URL}landing/placeholder.svg`,
-    comingSoon: true,
+    imageUrl: `${BASE_URL}landing/artist.svg`,
+    comingSoon: false,
     skills: ["Geometría", "Bucles", "Ángulos"]
   },
 
