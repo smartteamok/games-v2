@@ -22,3 +22,11 @@ export {
 } from "./playButton";
 
 export { updateBlockLimitCounter } from "./blockCounter";
+
+export {
+  getMobileNavElements,
+  updateMobileLevelNav,
+  updateFloatingBlockCounter,
+  initMobileNav,
+  type MobileNavElements
+} from "./mobileNav";
